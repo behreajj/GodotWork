@@ -15,8 +15,8 @@ class Lab:
 		self.alpha = opacity
 		
 	func _to_string() -> String:
-		return "{\"l\":%.3f,\"a\":%.3f,\"b\":%.3f,\"alpha\":%.3f}" \
-			% [self.l, self.a, self.b, self.alpha]
+		return "{\"l\":%.4f,\"a\":%.4f,\"b\":%.4f,\"alpha\":%.4f}" \
+			% [ self.l, self.a, self.b, self.alpha ]
 
 	static func adjust(o: Lab, d: Lab) -> Lab:
 		return Lab.new(o.l + d.l, o.a + d.a, o.b + d.b, o.alpha + d.alpha)
@@ -164,12 +164,30 @@ class Lab:
 
 	static func black() -> Lab:
 		return Lab.new(0.0, 0.0, 0.0, 1.0)
-		
+
+	static func blue() -> Lab:
+		return Lab.new(30.643950, -12.025805, -110.807802, 1.0)
+
 	static func clearBlack() -> Lab:
 		return Lab.new(0.0, 0.0, 0.0, 0.0)
 	
 	static func clearWhite() -> Lab:
 		return Lab.new(100.0, 0.0, 0.0, 0.0)
-	
+
+	static func cyan() -> Lab:
+		return Lab.new(90.624703, -43.802041, -15.009125, 1.0)
+
+	static func green() -> Lab:
+		return Lab.new(87.515187, -82.955969, 83.036780, 1.0)
+
+	static func magenta() -> Lab:
+		return Lab.new(60.255211, 102.677095, -61.002051, 1.0)
+
+	static func red() -> Lab:
+		return Lab.new(53.225974, 78.204287, 67.700618, 1.0)
+
+	static func yellow() -> Lab:
+		return Lab.new(97.345258, -37.154265, 95.186623, 1.0)
+
 	static func white() -> Lab:
 		return Lab.new(100.0, 0.0, 0.0, 1.0)

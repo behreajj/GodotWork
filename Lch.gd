@@ -15,8 +15,8 @@ class Lch:
 		self.alpha = opacity
 
 	func _to_string() -> String:
-		return "{\"l\":%.3f,\"c\":%.3f,\"h\":%.3f,\"alpha\":%.3f}" \
-			% [self.l, self.c, self.h, self.alpha]
+		return "{\"l\":%.4f,\"c\":%.4f,\"h\":%.4f,\"alpha\":%.4f}" \
+			% [ self.l, self.c, self.h, self.alpha ]
 
 	static func adjust(o: Lch, d: Lch) -> Lch:
 		return Lch.new(o.l + d.l, o.c + d.c, o.h + d.h, o.alpha + d.alpha)
@@ -105,12 +105,30 @@ class Lch:
 
 	static func black() -> Lch:
 		return Lch.new(0.0, 0.0, 0.0, 1.0)
-		
+
+	static func blue() -> Lch:
+		return Lch.new(30.643950, 111.458463, 0.732794, 1.0)
+	
 	static func clearBlack() -> Lch:
 		return Lch.new(0.0, 0.0, 0.0, 0.0)
 	
 	static func clearWhite() -> Lch:
 		return Lch.new(100.0, 0.0, 0.0, 0.0)
+
+	static func cyan() -> Lch:
+		return Lch.new(90.624703, 46.302188, 0.552540, 1.0)
+
+	static func green() -> Lch:
+		return Lch.new(87.515187, 117.374612, 0.374923, 1.0)
 	
+	static func magenta() -> Lch:
+		return Lch.new(60.255211, 119.431303, 0.914680, 1.0)
+	
+	static func red() -> Lch:
+		return Lch.new(53.225974, 103.437344, 0.113562, 1.0)
+
 	static func white() -> Lch:
-		return Lch.new(100.0, 0.0, 0.0, 1.0)
+		return Lch.new(100.0, 0.0, 0.0, 1.0)		
+
+	static func yellow() -> Lch:
+		return Lch.new(97.345258, 102.180881, 0.309228, 1.0)

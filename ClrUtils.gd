@@ -15,6 +15,7 @@ class ClrUtils:
 		return Lab.Lab.new(c.l, cr * cos(hr), cr * sin(hr), c.alpha)
 
 	static func linearToSrLab2(c: Rgb.Rgb) -> Lab.Lab:
+		# https://www.magnetkern.de/srlab2.html
 		var rLin: float = c.r
 		var gLin: float = c.g
 		var bLin: float = c.b
@@ -40,6 +41,7 @@ class ClrUtils:
 		return Lab.Lab.new(l, a, b, c.alpha)
 
 	static func srLab2ToLinear(c: Lab.Lab) -> Rgb.Rgb:
+		# https://www.magnetkern.de/srlab2.html
 		var l: float = c.l
 		var a: float = c.a
 		var b: float = c.b

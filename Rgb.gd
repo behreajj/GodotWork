@@ -15,8 +15,8 @@ class Rgb:
 		self.r = rd
 
 	func _to_string() -> String:
-		return "{\"r\":%.3f,\"g\":%.3f,\"b\":%.3f,\"alpha\":%.3f}" \
-			% [self.r, self.g, self.b, self.alpha]
+		return "{\"r\":%.4f,\"g\":%.4f,\"b\":%.4f,\"alpha\":%.4f}" \
+			% [ self.r, self.g, self.b, self.alpha ]
 
 	static func clamp01(c: Rgb) -> Rgb:
 		return Rgb.new( \
@@ -85,6 +85,38 @@ class Rgb:
 		elif t >= 1.0:
 			return Rgb.opaque(c)
 		return Rgb.new(c.r * t, c.g * t, c.b * t, t)
+
+	static func toneMapAcesLinear(c: Rgb) -> Rgb:
+		#  https://64.github.io/tonemapping/
+		var rFrwrd: float = 0.59719 * c.r + 0.35458 * c.g + 0.04823 * c.b
+		var gFrwrd: float = 0.076 * c.r + 0.90834 * c.g + 0.01566 * c.b
+		var bFrwrd: float = 0.0284 * c.r + 0.13383 * c.g + 0.83777 * c.b
+
+		var ar: float = rFrwrd * (rFrwrd + 0.0245786) - 0.000090537
+		var ag: float = gFrwrd * (gFrwrd + 0.0245786) - 0.000090537
+		var ab: float = bFrwrd * (bFrwrd + 0.0245786) - 0.000090537
+
+		var br: float = rFrwrd * (0.983729 * rFrwrd + 0.432951) + 0.238081
+		var bg: float = gFrwrd * (0.983729 * gFrwrd + 0.432951) + 0.238081
+		var bb: float = bFrwrd * (0.983729 * bFrwrd + 0.432951) + 0.238081
+
+		var cr: float = 0.0
+		var cg: float = 0.0
+		var cb: float = 0.0
+
+		if br != 0.0: cr = ar / br
+		if bg != 0.0: cg = ag / bg
+		if bb != 0.0: cb = ab / bb
+
+		var rBckwd: float = 1.60475 * cr - 0.53108 * cg - 0.07367 * cb
+		var gBckwd: float = -0.10208 * cr + 1.10813 * cg - 0.00605 * cb
+		var bBckwd: float = -0.00327 * cr - 0.07276 * cg + 1.07602 * cb
+
+		return Rgb.new(
+			clamp(rBckwd, 0.0, 1.0),
+			clamp(gBckwd, 0.0, 1.0),
+			clamp(bBckwd, 0.0, 1.0),
+			clamp(c.alpha, 0.0, 1.0))
 
 	static func unpremul(c: Rgb) -> Rgb:
 		var t: float = c.alpha
