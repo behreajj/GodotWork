@@ -14,6 +14,10 @@ class Rgb:
 		self.g = gr
 		self.r = rd
 
+	func _to_string() -> String:
+		return "{\"r\":%.3f,\"g\":%.3f,\"b\":%.3f,\"alpha\":%.3f}" \
+			% [self.r, self.g, self.b, self.alpha]
+
 	static func clamp01(c: Rgb) -> Rgb:
 		return Rgb.new( \
 			clamp(c.r, 0.0, 1.0), \

@@ -13,6 +13,10 @@ class Lab:
 		self.a = greenRed
 		self.b = blueYellow
 		self.alpha = opacity
+		
+	func _to_string() -> String:
+		return "{\"l\":%.3f,\"a\":%.3f,\"b\":%.3f,\"alpha\":%.3f}" \
+			% [self.l, self.a, self.b, self.alpha]
 
 	static func adjust(o: Lab, d: Lab) -> Lab:
 		return Lab.new(o.l + d.l, o.a + d.a, o.b + d.b, o.alpha + d.alpha)
