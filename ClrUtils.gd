@@ -4,9 +4,9 @@ const Rgb = preload("res://Rgb.gd")
 
 class ClrUtils:
 	static func labToLch(c: Lab.Lab) -> Lch.Lch:
-		var cSq: float = Lab.chromaSq(c)
+		var cSq: float = Lab.Lab.chromaSq(c)
 		if cSq > 0.000001:
-			return Lch.Lch.new(c.l, sqrt(cSq), Lab.hue(c), c.alpha)
+			return Lch.Lch.new(c.l, sqrt(cSq), Lab.Lab.hue(c), c.alpha)
 		return Lch.Lch.new(c.l, 0.0, 0.0, c.alpha)
 
 	static func lchToLab(c: Lch.Lch) -> Lab.Lab:
