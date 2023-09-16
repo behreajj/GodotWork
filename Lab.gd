@@ -9,6 +9,8 @@ class Lab:
 		greenRed: float = 0.0, \
 		blueYellow: float = 0.0, \
 		opacity: float = 1.0):
+		# TODO: Add documentation comments.
+		# https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_documentation_comments.html
 		self.l = lightness
 		self.a = greenRed
 		self.b = blueYellow
@@ -129,14 +131,6 @@ class Lab:
 			hueUnsigned = hueSigned + TAU
 		return hueUnsigned / TAU
 
-	static func mix(o: Lab, d: Lab, t: float) -> Lab:
-		var u: float = 1.0 - t
-		return Lab.new(
-			u * o.l + t * d.l,
-			u * o.a + t * d.a,
-			u * o.b + t * d.b,
-			u * o.alpha + t * d.alpha)
-			
 	static func opaque(c: Lab) -> Lab:
 		return Lab.new(c.l, c.a, c.b, 1.0)
 

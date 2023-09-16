@@ -49,6 +49,27 @@ class Rgb:
 
 		return Rgb.new(lr, lg, lb, c.alpha)
 
+	static func gray(c: Rgb) -> Rgb:
+		return Rgb.grayGamma(c)
+
+	static func grayGamma(c: Rgb) -> Rgb:
+		var linear: Rgb = Rgb.gammaToLinear(c)
+		var relLum: float = 0.21264935 * linear.r \
+			+ 0.71516913 * linear.g \
+			+ 0.07218152 * linear.b
+		var gr: float = relLum
+		if gr <=  0.04045:
+			gr = gr * 0.077399380804954
+		else:
+			gr = pow((gr + 0.055) * 0.9478672985782, 2.4)
+		return Rgb.new(gr, gr, gr, c.alpha)
+
+	static func grayLinear(c: Rgb) -> Rgb:
+		var relLum: float = 0.21264935 * c.r \
+			+ 0.71516913 * c.g \
+			+ 0.07218152 * c.b
+		return Rgb.new(relLum, relLum, relLum, c.alpha)
+
 	static func isInGamut(c: Rgb) -> bool:
 		return c.r >= 0.0 and c.r <= 1.0 \
 			and c.g >= 0.0 and c.g <= 1.0 \
@@ -85,6 +106,9 @@ class Rgb:
 		elif t >= 1.0:
 			return Rgb.opaque(c)
 		return Rgb.new(c.r * t, c.g * t, c.b * t, t)
+		
+	static func toneMapAcesGamma(c: Rgb) -> Rgb:
+		return Rgb.linearToGamma(Rgb.toneMapAcesLinear(Rgb.gammaToLinear(c)))
 
 	static func toneMapAcesLinear(c: Rgb) -> Rgb:
 		#  https://64.github.io/tonemapping/
