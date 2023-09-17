@@ -6,14 +6,14 @@ class Lab:
 	var l: float
 	
 	func _init(lightness: float = 100.0, \
-		greenRed: float = 0.0, \
-		blueYellow: float = 0.0, \
+		green_red: float = 0.0, \
+		blue_yellow: float = 0.0, \
 		opacity: float = 1.0):
 		# TODO: Add documentation comments.
 		# https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_documentation_comments.html
 		self.l = lightness
-		self.a = greenRed
-		self.b = blueYellow
+		self.a = green_red
+		self.b = blue_yellow
 		self.alpha = opacity
 		
 	func _to_string() -> String:
@@ -23,23 +23,23 @@ class Lab:
 	static func adjust(o: Lab, d: Lab) -> Lab:
 		return Lab.new(o.l + d.l, o.a + d.a, o.b + d.b, o.alpha + d.alpha)
 
-	static func copyAlpha(o: Lab, d: Lab) -> Lab:
+	static func copy_alpha(o: Lab, d: Lab) -> Lab:
 		return Lab.new(o.l, o.a, o.b, d.alpha)
 		
-	static func copyLight(o: Lab, d: Lab) -> Lab:
+	static func copy_light(o: Lab, d: Lab) -> Lab:
 		return Lab.new(d.l, o.a, o.b, o.alpha)
 
 	static func chroma(c: Lab) -> float:
-		return sqrt(Lab.chromaSq(c))
+		return sqrt(Lab.chroma_sq(c))
 
-	static func chromaSq(c: Lab) -> float:
+	static func chroma_sq(c: Lab) -> float:
 		return c.a * c.a + c.b * c.b
 
 	static func gray(c: Lab) -> Lab:
 		return Lab.new(c.l, 0.0, 0.0, c.alpha)
 	
-	static func harmonyAnalogous(c: Lab) -> Array:
-		var lAna: float = (c.l * 2.0 + 50.0) / 3.0
+	static func harmony_analogous(c: Lab) -> Array:
+		var l_ana: float = (c.l * 2.0 + 50.0) / 3.0
 		
 		var cos30: float = 0.8660254
 		var sin30: float = 0.5
@@ -52,15 +52,15 @@ class Lab:
 		var b330: float = cos330 * c.b + sin330 * c.a
 		
 		return [
-			Lab.new(lAna, a30, b30, c.alpha),
-			Lab.new(lAna, a330, b330, c.alpha)
+			Lab.new(l_ana, a30, b30, c.alpha),
+			Lab.new(l_ana, a330, b330, c.alpha)
 		]
 	
-	static func harmonyComplement(c: Lab) -> Array:
+	static func harmony_complement(c: Lab) -> Array:
 		return [ Lab.new(100.0 - c.l, -c.a, -c.b, c.alpha) ]
 		
-	static func harmonySplit(c: Lab) -> Array:
-		var lSpl: float = (250.0 - c.l * 2.0) / 3.0
+	static func harmony_split(c: Lab) -> Array:
+		var l_spl: float = (250.0 - c.l * 2.0) / 3.0
 		
 		var cos150: float = -0.8660254
 		var sin150: float = 0.5
@@ -73,21 +73,21 @@ class Lab:
 		var b210: float = cos210 * c.b + sin210 * c.a
 
 		return [
-			Lab.new(lSpl, a150, b150, c.alpha),
-			Lab.new(lSpl, a210, b210, c.alpha)
+			Lab.new(l_spl, a150, b150, c.alpha),
+			Lab.new(l_spl, a210, b210, c.alpha)
 		]
 		
-	static func harmonySquare(c: Lab) -> Array:
+	static func harmony_square(c: Lab) -> Array:
 		return [
 			Lab.new(50.0, -c.b, c.a, c.alpha),
 			Lab.new(100.0 - c.l, -c.a, -c.b, c.alpha),
 			Lab.new(50.0, c.b, -c.a, c.alpha)
 		]
 		
-	static func harmonyTetradic(c: Lab) -> Array:
-		var lTri: float = (200.0 - c.l) / 3.0
-		var lCmp: float = 100.0 - c.l
-		var lTet: float = (100.0 + c.l) / 3.0
+	static func harmony_tetradic(c: Lab) -> Array:
+		var l_tri: float = (200.0 - c.l) / 3.0
+		var l_cmp: float = 100.0 - c.l
+		var l_tet: float = (100.0 + c.l) / 3.0
 		
 		var cos120: float = -0.5
 		var sin120: float = 0.8660254
@@ -100,13 +100,13 @@ class Lab:
 		var b300: float = cos300 * c.b + sin300 * c.a
 		
 		return [
-			Lab.new(lTri, a120, b120, c.alpha),
-			Lab.new(lCmp, -c.a, -c.b, c.alpha),
-			Lab.new(lTet, a300, b300, c.alpha)
+			Lab.new(l_tri, a120, b120, c.alpha),
+			Lab.new(l_cmp, -c.a, -c.b, c.alpha),
+			Lab.new(l_tet, a300, b300, c.alpha)
 		]
 		
-	static func harmonyTriadic(c: Lab) -> Array:
-		var lTri: float = (200.0 - c.l) / 3.0
+	static func harmony_triadic(c: Lab) -> Array:
+		var l_tri: float = (200.0 - c.l) / 3.0
 		
 		var cos120: float = -0.5
 		var sin120: float = 0.8660254
@@ -119,37 +119,32 @@ class Lab:
 		var b240: float = cos240 * c.b + sin240 * c.a
 		
 		return [
-			Lab.new(lTri, a120, b120, c.alpha),
-			Lab.new(lTri, a240, b240, c.alpha)
+			Lab.new(l_tri, a120, b120, c.alpha),
+			Lab.new(l_tri, a240, b240, c.alpha)
 		]
 		
 	static func hue(c: Lab) -> float:
-		# For reference, fposmod is GDScript floorMod for floats.
-		var hueSigned: float = atan2(c.b, c.a)
-		var hueUnsigned: float = hueSigned
-		if hueSigned < -0.0:
-			hueUnsigned = hueSigned + TAU
-		return hueUnsigned / TAU
+		var hue_signed: float = atan2(c.b, c.a)
+		var hue_unsigned: float = hue_signed
+		if hue_signed < -0.0:
+			hue_unsigned = hue_signed + TAU
+		return hue_unsigned / TAU
 
 	static func opaque(c: Lab) -> Lab:
 		return Lab.new(c.l, c.a, c.b, 1.0)
 
-	static func rescaleChroma(c: Lab, scalar: float) -> Lab:
-		var cSq: float = Lab.chromaSq(c)
-		if cSq > 0.000001:
-			var scInv: float = scalar / sqrt(cSq)
-			return Lab.new(
-				c.l,
-				c.a * scInv,
-				c.b * scInv,
-				c.alpha)
+	static func rescale_chroma(c: Lab, scalar: float) -> Lab:
+		var c_sq: float = Lab.chroma_sq(c)
+		if c_sq > 0.000001:
+			var sc_inv: float = scalar / sqrt(c_sq)
+			return Lab.new(c.l, c.a * sc_inv, c.b * sc_inv, c.alpha)
 		return Lab.gray(c)
 
-	static func rotateHue(c: Lab, hueShift: float) -> Lab:
-		var radians: float = hueShift * TAU
-		return Lab.rotateHueInternal(c, cos(radians), sin(radians))
+	static func rotate_hue(c: Lab, hue_shift: float) -> Lab:
+		var radians: float = hue_shift * TAU
+		return Lab._rotate_hue_internal(c, cos(radians), sin(radians))
 
-	static func rotateHueInternal(c: Lab, cosa: float, sina: float) -> Lab:
+	static func _rotate_hue_internal(c: Lab, cosa: float, sina: float) -> Lab:
 		return Lab.new(
 			c.l,
 			cosa * c.a - sina * c.b,
@@ -162,10 +157,10 @@ class Lab:
 	static func blue() -> Lab:
 		return Lab.new(30.643950, -12.025805, -110.807802, 1.0)
 
-	static func clearBlack() -> Lab:
+	static func clear_black() -> Lab:
 		return Lab.new(0.0, 0.0, 0.0, 0.0)
 	
-	static func clearWhite() -> Lab:
+	static func clear_white() -> Lab:
 		return Lab.new(100.0, 0.0, 0.0, 0.0)
 
 	static func cyan() -> Lab:

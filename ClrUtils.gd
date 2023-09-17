@@ -3,58 +3,58 @@ const Lch = preload("res://Lch.gd")
 const Rgb = preload("res://Rgb.gd")
 
 class ClrUtils:
-	static func gammaRgbToSrLab2(c: Rgb.Rgb) -> Lab.Lab:
-		return ClrUtils.linearRgbToSrLab2(Rgb.Rgb.gammaToLinear(c))
+	static func gamma_rgb_to_sr_lab_2(c: Rgb.Rgb) -> Lab.Lab:
+		return ClrUtils.linear_rgb_to_sr_lab_2(Rgb.Rgb.gamma_to_linear(c))
 
-	static func gammaRgbToSrLch(c: Rgb.Rgb) -> Lch.Lch:
-		return ClrUtils.labToLch(ClrUtils.linearRgbToSrLab2(
-			Rgb.Rgb.gammaToLinear(c)))
+	static func gamma_rgb_to_sr_lch(c: Rgb.Rgb) -> Lch.Lch:
+		return ClrUtils.lab_to_lch(ClrUtils.linear_rgb_to_sr_lab_2(
+			Rgb.Rgb.gamma_to_linear(c)))
 		
-	static func labToLch(c: Lab.Lab) -> Lch.Lch:
-		var cSq: float = Lab.Lab.chromaSq(c)
+	static func lab_to_lch(c: Lab.Lab) -> Lch.Lch:
+		var cSq: float = Lab.Lab.chroma_sq(c)
 		if cSq > 0.000001:
 			return Lch.Lch.new(c.l, sqrt(cSq), Lab.Lab.hue(c), c.alpha)
 		return Lch.Lch.new(c.l, 0.0, 0.0, c.alpha)
 
-	static func lchToLab(c: Lch.Lch) -> Lab.Lab:
+	static func lch_to_lab(c: Lch.Lch) -> Lab.Lab:
 		var cr: float = max(0.0, c.c)
 		var hr: float = c.h * TAU
 		return Lab.Lab.new(c.l, cr * cos(hr), cr * sin(hr), c.alpha)
 
-	static func lerpAngleNear(o: float, \
+	static func lerp_angle_near(o: float, \
 		d: float, \
 		t: float = 0.5, \
 		r: float = 1.0)-> float:
 		# range is a reserved keyword in GDScript.
 
-		var oWrapped: float = fposmod(o, r)
-		var dWrapped: float = fposmod(d, r)
+		var o_wrapped: float = fposmod(o, r)
+		var d_wrapped: float = fposmod(d, r)
 
-		if t <= 0.0: return oWrapped
-		if t >= 1.0: return dWrapped
+		if t <= 0.0: return o_wrapped
+		if t >= 1.0: return d_wrapped
 
-		var diff: float = dWrapped - oWrapped
+		var diff: float = d_wrapped - o_wrapped
 		if diff != 0.0:
 			var u: float = 1.0 - t
 			var rHalf: float = r * 0.5
-			if oWrapped < dWrapped and diff > rHalf:
-				return fposmod(u * (oWrapped + r) + t * dWrapped, r)
-			elif oWrapped > dWrapped and diff < -rHalf:
-				return fposmod(u * oWrapped + t * (dWrapped + r), r)
+			if o_wrapped < d_wrapped and diff > rHalf:
+				return fposmod(u * (o_wrapped + r) + t * d_wrapped, r)
+			elif o_wrapped > d_wrapped and diff < -rHalf:
+				return fposmod(u * o_wrapped + t * (d_wrapped + r), r)
 			else:
-				return u * oWrapped + t * dWrapped
-		return oWrapped
+				return u * o_wrapped + t * d_wrapped
+		return o_wrapped
 
-	static func linearRgbToSrLab2(c: Rgb.Rgb) -> Lab.Lab:
+	static func linear_rgb_to_sr_lab_2(c: Rgb.Rgb) -> Lab.Lab:
 		# https://www.magnetkern.de/srlab2.html
-		var rLin: float = c.r
-		var gLin: float = c.g
-		var bLin: float = c.b
+		var rl: float = c.r
+		var gl: float = c.g
+		var bl: float = c.b
 
 		# Convert from linear sRGB to XYZ.
-		var x0: float = 0.32053 * rLin + 0.63692 * gLin + 0.04256 * bLin
-		var y0: float = 0.161987 * rLin + 0.756636 * gLin + 0.081376 * bLin
-		var z0: float = 0.017228 * rLin + 0.10866 * gLin + 0.874112 * bLin
+		var x0: float = 0.32053 * rl + 0.63692 * gl + 0.04256 * bl
+		var y0: float = 0.161987 * rl + 0.756636 * gl + 0.081376 * bl
+		var z0: float = 0.017228 * rl + 0.10866 * gl + 0.874112 * bl
 	
 		var x1: float = x0 * 9.032963
 		var y1: float = y0 * 9.032963
@@ -71,23 +71,23 @@ class ClrUtils:
 	
 		return Lab.Lab.new(l, a, b, c.alpha)
 		
-	static func linearRgbToSrLch(c: Rgb.Rgb) -> Lch.Lch:
-		return ClrUtils.labToLch(ClrUtils.linearRgbToSrLab2(c))
+	static func linear_rgb_to_sr_lch(c: Rgb.Rgb) -> Lch.Lch:
+		return ClrUtils.lab_to_lch(ClrUtils.linear_rgb_to_sr_lab_2(c))
 
-	static func mixGammaRgb(o: Rgb.Rgb, d: Rgb.Rgb, t: float = 0.5) -> Rgb.Rgb:
+	static func mix_gamma_rgb(o: Rgb.Rgb, d: Rgb.Rgb, t: float = 0.5) -> Rgb.Rgb:
 		if t <= 0.0: return Rgb.Rgb.new(o.r, o.g, o.b, o.alpha)
 		if t >= 1.0: return Rgb.Rgb.new(d.r, d.g, d.b, d.alpha)
 
 		var u: float = 1.0 - t
-		var ol: Rgb.Rgb = Rgb.Rgb.gammaToLinear(o)
-		var dl: Rgb.Rgb = Rgb.Rgb.gammaToLinear(d)
-		return Rgb.Rgb.linearToGamma(Rgb.Rgb.new(
+		var ol: Rgb.Rgb = Rgb.Rgb.gamma_to_linear(o)
+		var dl: Rgb.Rgb = Rgb.Rgb.gamma_to_linear(d)
+		return Rgb.Rgb.linear_to_gamma(Rgb.Rgb.new(
 			u * ol.r + t * dl.r,
 			u * ol.g + t * dl.g,
 			u * ol.b + t * dl.b,
 			u * ol.alpha + t * dl.alpha))
 
-	static func mixLab(o: Lab.Lab, d: Lab.Lab, t: float = 0.5) -> Lab.Lab:
+	static func mix_lab(o: Lab.Lab, d: Lab.Lab, t: float = 0.5) -> Lab.Lab:
 		if t <= 0.0: return Lab.Lab.new(o.l, o.a, o.b, o.alpha)
 		if t >= 1.0: return Lab.Lab.new(d.l, d.a, d.b, d.alpha)
 
@@ -98,28 +98,28 @@ class ClrUtils:
 			u * o.b + t * d.b,
 			u * o.alpha + t * d.alpha)
 
-	static func mixLch(o: Lch.Lch, d: Lch.Lch, t: float = 0.5) -> Lch.Lch:
+	static func mix_lch(o: Lch.Lch, d: Lch.Lch, t: float = 0.5) -> Lch.Lch:
 		if t <= 0.0: return Lch.Lch.new(o.l, o.c, o.h, o.alpha)
 		if t >= 1.0: return Lch.Lch.new(d.l, d.c, d.h, d.alpha)
 
 		var u: float = 1.0 - t
 		var cl: float = u * o.l + t * d.l
-		var calpha: float = u * o.alpha + t * d.alpha
+		var c_alpha: float = u * o.alpha + t * d.alpha
 
-		var ogray = o.c < 0.000001
-		var dgray = o.c < 0.000001
-		if ogray and dgray:
-			return Lch.Lch.new(cl, 0.0, 0.0, calpha)
-		elif ogray or dgray:
+		var o_gray = o.c < 0.000001
+		var d_gray = o.c < 0.000001
+		if o_gray and d_gray:
+			return Lch.Lch.new(cl, 0.0, 0.0, c_alpha)
+		elif o_gray or d_gray:
 			var oa: float = 0.0
 			var ob: float = 0.0
-			if not ogray:
+			if not o_gray:
 				oa = o.c * cos(o.h)
 				ob = o.c * sin(o.h)
 
 			var da: float = 0.0
 			var db: float = 0.0	
-			if not dgray:
+			if not d_gray:
 				da = d.c * cos(d.h)
 				db = d.c * sin(d.h)
 			
@@ -128,16 +128,18 @@ class ClrUtils:
 			var cc: float = sqrt(ca * ca + cb * cb)
 			var ch: float = fposmod(atan2(cb, ca), TAU) / TAU
 
-			return Lch.Lch.new(cl, cc, ch, calpha)
+			return Lch.Lch.new(cl, cc, ch, c_alpha)
 
 		var cc: float = u * o.c + t * d.c
 	
-		# lerp_angle may reslult in negative hues.
+		# lerp_angle may result in negative hues.
 		# var ch: float = lerp_angle(o.h * TAU, d.h * TAU, t) / TAU
-		var ch: float = ClrUtils.lerpAngleNear(o.h, d.h, t, 1.0)
-		return Lch.Lch.new(cl, cc, ch, calpha)
+		var ch: float = ClrUtils.lerp_angle_near(o.h, d.h, t, 1.0)
+		return Lch.Lch.new(cl, cc, ch, c_alpha)
 
-	static func mixLinearRgb(o: Rgb.Rgb, d: Rgb.Rgb, t: float = 0.5) -> Rgb.Rgb:
+	static func mix_linear_rgb(o: Rgb.Rgb, \
+		d: Rgb.Rgb, \
+		t: float = 0.5) -> Rgb.Rgb:
 		if t <= 0.0: return Rgb.Rgb.new(o.r, o.g, o.b, o.alpha)
 		if t >= 1.0: return Rgb.Rgb.new(d.r, d.g, d.b, d.alpha)
 
@@ -148,10 +150,10 @@ class ClrUtils:
 			u * o.b + t * d.b,
 			u * o.alpha + t * d.alpha)
 
-	static func srLab2ToGammaRgb(c: Lab.Lab) -> Rgb.Rgb:
-		return Rgb.Rgb.linearToGamma(ClrUtils.srLab2ToLinearRgb(c))
+	static func sr_lab_2_to_gamma_rgb(c: Lab.Lab) -> Rgb.Rgb:
+		return Rgb.Rgb.linear_to_gamma(ClrUtils.sr_lab_2_to_linear_rgb(c))
 
-	static func srLab2ToLinearRgb(c: Lab.Lab) -> Rgb.Rgb:
+	static func sr_lab_2_to_linear_rgb(c: Lab.Lab) -> Rgb.Rgb:
 		# https://www.magnetkern.de/srlab2.html
 		var l: float = c.l
 		var a: float = c.a
@@ -178,9 +180,9 @@ class ClrUtils:
 
 		return Rgb.Rgb.new(rl, gl, bl, c.alpha)
 
-	static func srLchToGammaRgb(c: Lch.Lch) -> Rgb.Rgb:
-		return Rgb.Rgb.linearToGamma(ClrUtils.srLab2ToLinearRgb(
-			ClrUtils.lchToLab(c)))
+	static func sr_lch_to_gamma_rgb(c: Lch.Lch) -> Rgb.Rgb:
+		return Rgb.Rgb.linear_to_gamma(ClrUtils.sr_lab_2_to_linear_rgb(
+			ClrUtils.lch_to_lab(c)))
 
-	static func srLchToLinearRgb(c: Lch.Lch) -> Rgb.Rgb:
-		return ClrUtils.srLab2ToLinearRgb(ClrUtils.lchToLab(c))
+	static func sr_lch_to_linear_rgb(c: Lch.Lch) -> Rgb.Rgb:
+		return ClrUtils.sr_lab_2_to_linear_rgb(ClrUtils.lch_to_lab(c))

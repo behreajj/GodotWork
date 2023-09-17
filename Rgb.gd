@@ -18,17 +18,17 @@ class Rgb:
 		return "{\"r\":%.4f,\"g\":%.4f,\"b\":%.4f,\"alpha\":%.4f}" \
 			% [ self.r, self.g, self.b, self.alpha ]
 
-	static func clamp01(c: Rgb) -> Rgb:
+	static func clamp_01(c: Rgb) -> Rgb:
 		return Rgb.new( \
 			clamp(c.r, 0.0, 1.0), \
 			clamp(c.g, 0.0, 1.0), \
 			clamp(c.b, 0.0, 1.0), \
 			clamp(c.alpha, 0.0, 1.0))
 
-	static func copyAlpha(o: Rgb, d: Rgb) -> Rgb:
+	static func copy_alpha(o: Rgb, d: Rgb) -> Rgb:
 		return Rgb.new(o.r, o.g, o.b, d.alpha)
 
-	static func gammaToLinear(c: Rgb) -> Rgb:
+	static func gamma_to_linear(c: Rgb) -> Rgb:
 		var lr: float = c.r
 		if lr <= 0.04045:
 			lr = lr * 0.077399380804954
@@ -50,32 +50,32 @@ class Rgb:
 		return Rgb.new(lr, lg, lb, c.alpha)
 
 	static func gray(c: Rgb) -> Rgb:
-		return Rgb.grayGamma(c)
+		return Rgb.gray_gamma(c)
 
-	static func grayGamma(c: Rgb) -> Rgb:
-		var linear: Rgb = Rgb.gammaToLinear(c)
-		var relLum: float = 0.21264935 * linear.r \
+	static func gray_gamma(c: Rgb) -> Rgb:
+		var linear: Rgb = Rgb.gamma_to_linear(c)
+		var rel_lum: float = 0.21264935 * linear.r \
 			+ 0.71516913 * linear.g \
 			+ 0.07218152 * linear.b
-		var gr: float = relLum
+		var gr: float = rel_lum
 		if gr <=  0.04045:
 			gr = gr * 0.077399380804954
 		else:
 			gr = pow((gr + 0.055) * 0.9478672985782, 2.4)
 		return Rgb.new(gr, gr, gr, c.alpha)
 
-	static func grayLinear(c: Rgb) -> Rgb:
-		var relLum: float = 0.21264935 * c.r \
+	static func gray_linear(c: Rgb) -> Rgb:
+		var rel_lum: float = 0.21264935 * c.r \
 			+ 0.71516913 * c.g \
 			+ 0.07218152 * c.b
-		return Rgb.new(relLum, relLum, relLum, c.alpha)
+		return Rgb.new(rel_lum, rel_lum, rel_lum, c.alpha)
 
-	static func isInGamut(c: Rgb) -> bool:
+	static func is_in_gamut(c: Rgb) -> bool:
 		return c.r >= 0.0 and c.r <= 1.0 \
 			and c.g >= 0.0 and c.g <= 1.0 \
 			and c.b >= 0.0 and c.b <= 1.0
 
-	static func linearToGamma(c: Rgb) -> Rgb:
+	static func linear_to_gamma(c: Rgb) -> Rgb:
 		var sr: float = c.r
 		if sr <= 0.0031308:
 			sr = sr * 12.92
@@ -102,15 +102,16 @@ class Rgb:
 	static func premul(c: Rgb) -> Rgb:
 		var t: float = c.alpha
 		if t <= 0.0:
-			return Rgb.clearBlack()
+			return Rgb.clear_black()
 		elif t >= 1.0:
 			return Rgb.opaque(c)
 		return Rgb.new(c.r * t, c.g * t, c.b * t, t)
 		
-	static func toneMapAcesGamma(c: Rgb) -> Rgb:
-		return Rgb.linearToGamma(Rgb.toneMapAcesLinear(Rgb.gammaToLinear(c)))
+	static func tone_map_aces_gamma(c: Rgb) -> Rgb:
+		return Rgb.linear_to_gamma(Rgb.tone_map_aces_linear(
+			Rgb.gamma_to_linear(c)))
 
-	static func toneMapAcesLinear(c: Rgb) -> Rgb:
+	static func tone_map_aces_linear(c: Rgb) -> Rgb:
 		#  https://64.github.io/tonemapping/
 		var rFrwrd: float = 0.59719 * c.r + 0.35458 * c.g + 0.04823 * c.b
 		var gFrwrd: float = 0.076 * c.r + 0.90834 * c.g + 0.01566 * c.b
@@ -145,7 +146,7 @@ class Rgb:
 	static func unpremul(c: Rgb) -> Rgb:
 		var t: float = c.alpha
 		if t <= 0.0:
-			return Rgb.clearBlack()
+			return Rgb.clear_black()
 		elif t >= 1.0:
 			return Rgb.opaque(c)
 		var tInv: float = 1.0 / t
@@ -157,10 +158,10 @@ class Rgb:
 	static func blue() -> Rgb:
 		return Rgb.new(0.0, 0.0, 1.0, 1.0)
 
-	static func clearBlack() -> Rgb:
+	static func clear_black() -> Rgb:
 		return Rgb.new(0.0, 0.0, 0.0, 0.0)
 		
-	static func clearWhite() -> Rgb:
+	static func clear_white() -> Rgb:
 		return Rgb.new(1.0, 1.0, 1.0, 0.0)
 
 	static func cyan() -> Rgb:
