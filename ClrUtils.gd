@@ -61,7 +61,7 @@ static func lerp_angle_near(o: float, \
 static func linear_rgb_to_sr_lab_2(c: Rgb) -> Lab:
     # There's drift when converting the same color back and forth between RGB
     # and LAB. Higher precision numbers don't seem to help.
-    # The epsilon can be as high as 0.001.
+    # The epsilon can be as big as 0.001.
     var rl: float = c.r
     var gl: float = c.g
     var bl: float = c.b
@@ -71,24 +71,23 @@ static func linear_rgb_to_sr_lab_2(c: Rgb) -> Lab:
     var y0: float = 0.161987 * rl + 0.756636 * gl + 0.081376 * bl
     var z0: float = 0.017228 * rl + 0.10866 * gl + 0.874112 * bl
 
-    var x1: float = 0.0
-    var y1: float = 0.0
-    var z1: float = 0.0
-
     var one_third: float = 1.0 / 3.0
     var comparisand: float = 216.0 / 24389.0
     var scalar: float = 24389.0 / 2700.0
 
+    var x1: float = 0.0
     if x0 <= comparisand:
-        x0 = x0 * scalar
+        x1 = x0 * scalar
     else:
         x1 = 1.16 * pow(x0, one_third) - 0.16
 
+    var y1: float = 0.0
     if y0 <= comparisand:
-        y0 = y0 * scalar
+        y1 = y0 * scalar
     else:
         y1 = 1.16 * pow(y0, one_third) - 0.16
 
+    var z1: float = 0.0
     if z0 <= comparisand:
         z1 = z0 * scalar
     else:
@@ -181,9 +180,7 @@ static func mix_lch(o: Lch, d: Lch, t: float = 0.5) -> Lch:
 ## Mixes two colors in linear sRGB by a factor in [0.0, 1.0]. If the factor
 ## is less than or equal to zero, returns the origin by value. If greater
 ## than or equal to one, returns the destination by value.
-static func mix_linear_rgb(o: Rgb, \
-    d: Rgb, \
-    t: float = 0.5) -> Rgb:
+static func mix_linear_rgb(o: Rgb, d: Rgb, t: float = 0.5) -> Rgb:
     if t <= 0.0: return Rgb.new(o.r, o.g, o.b, o.alpha)
     if t >= 1.0: return Rgb.new(d.r, d.g, d.b, d.alpha)
 
@@ -203,7 +200,7 @@ static func sr_lab_2_to_gamma_rgb(c: Lab) -> Rgb:
 static func sr_lab_2_to_linear_rgb(c: Lab) -> Rgb:
     # There's drift when converting the same color back and forth between RGB
     # and LAB. Higher precision numbers don't seem to help.
-    # The epsilon can be as high as 0.001.
+    # The epsilon can be as big as 0.001.
     var l: float = c.l
     var a: float = c.a
     var b: float = c.b

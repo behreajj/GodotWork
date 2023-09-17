@@ -46,21 +46,21 @@ static func copy_alpha(o: Rgb, d: Rgb) -> Rgb:
 static func gamma_to_linear(c: Rgb) -> Rgb:
     var lr: float = c.r
     if lr <= 0.04045:
-        lr = lr * 0.077399380804954
+        lr = lr / 12.92
     else:
-        lr = pow((lr + 0.055) * 0.9478672985782, 2.4)
+        lr = pow((lr + 0.055) / 1.055, 2.4)
 
     var lg: float = c.g
     if lg <= 0.04045:
-        lg = lg * 0.077399380804954
+        lg = lg / 12.92
     else:
-        lg = pow((lg + 0.055) * 0.9478672985782, 2.4)
+        lg = pow((lg + 0.055) / 1.055, 2.4)
 
     var lb: float = c.b
     if lb <= 0.04045:
-        lb = lb * 0.077399380804954
+        lb = lb / 12.92
     else:
-        lb = pow((lb + 0.055) * 0.9478672985782, 2.4)
+        lb = pow((lb + 0.055) / 1.055, 2.4)
 
     return Rgb.new(lr, lg, lb, c.alpha)
 

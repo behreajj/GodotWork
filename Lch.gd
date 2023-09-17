@@ -165,14 +165,14 @@ static func clear_white() -> Lch:
 static func cyan() -> Lch:
     return Lch.new(
         90.624702543393,
-        46.3021884777735,
+        46.3021884777733,
         0.55254010973227,
         1.0)
 
 ## Creates a preset color for green in SR LCH.
 static func green() -> Lch:
     return Lch.new(
-        87.5151869060629,
+        87.5151869060628,
         117.374612112472,
         0.37492251819407,
         1.0)
@@ -200,7 +200,7 @@ static func white() -> Lch:
 ## Creates a preset color for yellow in SR LCH.
 static func yellow() -> Lch:
     return Lch.new(
-        97.3452582060734,
+        97.3452582060733,
         102.180881444855,
         0.30922841685654,
         1.0)

@@ -225,15 +225,15 @@ static func clear_white() -> Lab:
 static func cyan() -> Lab:
     return Lab.new(
         90.624702543393,
-        -43.8020414387431,
+        -43.802041438743,
         -15.0091246790041,
         1.0)
 
 ## Creates a preset color for green in SR LAB 2.
 static func green() -> Lab:
     return Lab.new(
-        87.5151869060629,
-        -82.9559689892561,
+        87.5151869060628,
+        -82.9559689892563,
         83.0367796678485,
         1.0)
 
@@ -250,7 +250,7 @@ static func red() -> Lab:
     return Lab.new(
         53.225973948503,
         78.2042868749242,
-        67.7006179200895,
+        67.7006179200894,
         1.0)
 
 ## Creates a preset color for opaque white.
@@ -260,7 +260,7 @@ static func white() -> Lab:
 ## Creates a preset color for yellow in SR LAB 2.
 static func yellow() -> Lab:
     return Lab.new(
-        97.3452582060734,
+        97.3452582060733,
         -37.1542649676957,
         95.1866226292217,
         1.0)
