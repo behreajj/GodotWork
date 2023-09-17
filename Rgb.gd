@@ -1,10 +1,21 @@
+## Represents colors in gamma or linear RGB, assumed to be standard RGB (sRGB).
+## Typically, the red, green and blue channels are real numbers in [0.0, 1.0],
+## but these channels are not clamped so as to preserve out-of-gamut colors.
 class Rgb:
 	
+	## The alpha, or opacity, component, in the range [0.0, 1.0].
 	var alpha: float
+
+	## The blue channel, typically in the range [0.0, 1.0].
 	var b: float
+	
+	## The green channel, typically in the range [0.0, 1.0].
 	var g: float
+
+	## The red channel, typically in the range [0.0, 1.0].
 	var r: float
 	
+	## Creates an RGB color from real numbers.
 	func _init(rd: float = 1.0, \
 		gr: float = 1.0, \
 		bl: float = 1.0, \
@@ -14,10 +25,11 @@ class Rgb:
 		self.g = gr
 		self.r = rd
 
+	## Renders the color as a string in JSON format.
 	func _to_string() -> String:
-		return "{\"r\":%.4f,\"g\":%.4f,\"b\":%.4f,\"alpha\":%.4f}" \
-			% [ self.r, self.g, self.b, self.alpha ]
+		return Rgb.to_json_string(self)
 
+	## Clamps all color components to the range [0.0, 1.0].
 	static func clamp_01(c: Rgb) -> Rgb:
 		return Rgb.new( \
 			clamp(c.r, 0.0, 1.0), \
@@ -25,9 +37,12 @@ class Rgb:
 			clamp(c.b, 0.0, 1.0), \
 			clamp(c.alpha, 0.0, 1.0))
 
+	## Creates a color with the alpha channel of the right operand. The other
+	## channels adopt the values of the left operand.
 	static func copy_alpha(o: Rgb, d: Rgb) -> Rgb:
 		return Rgb.new(o.r, o.g, o.b, d.alpha)
 
+	## Converts a color from gamma sRGB to linear sRGB.
 	static func gamma_to_linear(c: Rgb) -> Rgb:
 		var lr: float = c.r
 		if lr <= 0.04045:
@@ -49,9 +64,10 @@ class Rgb:
 
 		return Rgb.new(lr, lg, lb, c.alpha)
 
-	static func gray(c: Rgb) -> Rgb:
-		return Rgb.gray_gamma(c)
-
+	## Finds a grayscale version of the color, assuming the color is in gamma
+	## sRGB. Uses the coefficients 0.213, 0.715 and 0.072. Converts the color
+	## from gamma to linear, finds the relative luminance, then converts that
+	## to gamma.
 	static func gray_gamma(c: Rgb) -> Rgb:
 		var linear: Rgb = Rgb.gamma_to_linear(c)
 		var rel_lum: float = 0.21264935 * linear.r \
@@ -64,17 +80,22 @@ class Rgb:
 			gr = pow((gr + 0.055) * 0.9478672985782, 2.4)
 		return Rgb.new(gr, gr, gr, c.alpha)
 
+	## Finds a grayscale version of the color, assuming the color is in linear
+	## sRGB. Uses the coefficients 0.213, 0.715 and 0.072.
 	static func gray_linear(c: Rgb) -> Rgb:
 		var rel_lum: float = 0.21264935 * c.r \
 			+ 0.71516913 * c.g \
 			+ 0.07218152 * c.b
 		return Rgb.new(rel_lum, rel_lum, rel_lum, c.alpha)
 
+	## Evaluates whether a color is in gamut, i.e., whether the red, green and
+	## blue channels are all within [0.0, 1.0].
 	static func is_in_gamut(c: Rgb) -> bool:
 		return c.r >= 0.0 and c.r <= 1.0 \
 			and c.g >= 0.0 and c.g <= 1.0 \
 			and c.b >= 0.0 and c.b <= 1.0
 
+	## Converts a color from linear sRGB to gamma sRGB.
 	static func linear_to_gamma(c: Rgb) -> Rgb:
 		var sr: float = c.r
 		if sr <= 0.0031308:
@@ -96,9 +117,14 @@ class Rgb:
 
 		return Rgb.new(sr, sg, sb, c.alpha)
 
+	## Finds an opaque version of the color, where the alpha is 1.0.
 	static func opaque(c: Rgb) -> Rgb:
 		return Rgb.new(c.r, c.g, c.b, 1.0)
 		
+	# Creates a color with the source channels multiplied by its alpha channel.
+	# If the alpha is less than or equal to zero, returns clear black.
+	# If the alpha is greater than or equal to one, returns the opaque color.
+	# Used when blending colors.
 	static func premul(c: Rgb) -> Rgb:
 		var t: float = c.alpha
 		if t <= 0.0:
@@ -107,12 +133,15 @@ class Rgb:
 			return Rgb.opaque(c)
 		return Rgb.new(c.r * t, c.g * t, c.b * t, t)
 		
+	## For colors which exceed the range [0.0, 1.0] in gamma RGB, applies
+	## ACES tone mapping algorithm.
 	static func tone_map_aces_gamma(c: Rgb) -> Rgb:
 		return Rgb.linear_to_gamma(Rgb.tone_map_aces_linear(
 			Rgb.gamma_to_linear(c)))
 
+	## For colors which exceed the range [0.0, 1.0] in linear RGB, applies
+	## ACES tone mapping algorithm. See https://64.github.io/tonemapping/ .
 	static func tone_map_aces_linear(c: Rgb) -> Rgb:
-		#  https://64.github.io/tonemapping/
 		var rFrwrd: float = 0.59719 * c.r + 0.35458 * c.g + 0.04823 * c.b
 		var gFrwrd: float = 0.076 * c.r + 0.90834 * c.g + 0.01566 * c.b
 		var bFrwrd: float = 0.0284 * c.r + 0.13383 * c.g + 0.83777 * c.b
@@ -143,6 +172,15 @@ class Rgb:
 			clamp(bBckwd, 0.0, 1.0),
 			clamp(c.alpha, 0.0, 1.0))
 
+	## Renders a color as a string in JSON format.
+	static func to_json_string(c: Rgb) -> String:
+		return "{\"r\":%.4f,\"g\":%.4f,\"b\":%.4f,\"alpha\":%.4f}" \
+			% [ c.r, c.g, c.b, c.alpha ]
+
+	# Creates a color with the source channels divided by its alpha channel.
+	# If the alpha is less than or equal to zero, returns clear black.
+	# If the alpha is greater than or equal to one, returns the opaque color.
+	# Used when blending colors.
 	static func unpremul(c: Rgb) -> Rgb:
 		var t: float = c.alpha
 		if t <= 0.0:
@@ -152,32 +190,42 @@ class Rgb:
 		var tInv: float = 1.0 / t
 		return Rgb.new(c.r * tInv, c.g * tInv, c.b * tInv, t)
 
+	# Creates a preset color for opaque black.
 	static func black() -> Rgb:
 		return Rgb.new(0.0, 0.0, 0.0, 1.0)
 
+	# Creates a preset color for blue.
 	static func blue() -> Rgb:
 		return Rgb.new(0.0, 0.0, 1.0, 1.0)
 
+	# Creates a preset color for invisible black.
 	static func clear_black() -> Rgb:
 		return Rgb.new(0.0, 0.0, 0.0, 0.0)
-		
+	
+	# Creates a preset color for invisible white.
 	static func clear_white() -> Rgb:
 		return Rgb.new(1.0, 1.0, 1.0, 0.0)
 
+	# Creates a preset color for cyan.
 	static func cyan() -> Rgb:
 		return Rgb.new(0.0, 1.0, 1.0, 1.0)
 
+	# Creates a preset color for green.
 	static func green() -> Rgb:
 		return Rgb.new(0.0, 1.0, 0.0, 1.0)
 
+	# Creates a preset color for magenta.
 	static func magenta() -> Rgb:
 		return Rgb.new(1.0, 0.0, 1.0, 1.0)
 
+	# Creates a preset color for red.
 	static func red() -> Rgb:
 		return Rgb.new(1.0, 0.0, 0.0, 1.0)
 
+	# Creates a preset color for opaque white.
 	static func white() -> Rgb:
 		return Rgb.new(1.0, 1.0, 1.0, 1.0)
 
+	# Creates a preset color for yellow.
 	static func yellow() -> Rgb:
 		return Rgb.new(1.0, 1.0, 0.0, 1.0)

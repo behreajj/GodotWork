@@ -2,25 +2,39 @@ const Lab = preload("res://Lab.gd")
 const Lch = preload("res://Lch.gd")
 const Rgb = preload("res://Rgb.gd")
 
+## A static class for methods that convert between color representations and to
+## mix colors.
 class ClrUtils:
+	
+	## Converts a color from gamma sRGB to SR LAB 2.
 	static func gamma_rgb_to_sr_lab_2(c: Rgb.Rgb) -> Lab.Lab:
 		return ClrUtils.linear_rgb_to_sr_lab_2(Rgb.Rgb.gamma_to_linear(c))
 
+	## Converts a color from gamma sRGB to SR LCH.
 	static func gamma_rgb_to_sr_lch(c: Rgb.Rgb) -> Lch.Lch:
 		return ClrUtils.lab_to_lch(ClrUtils.linear_rgb_to_sr_lab_2(
 			Rgb.Rgb.gamma_to_linear(c)))
-		
+
+	## Converts a color from LAB to LCH.
 	static func lab_to_lch(c: Lab.Lab) -> Lch.Lch:
 		var cSq: float = Lab.Lab.chroma_sq(c)
 		if cSq > 0.000001:
 			return Lch.Lch.new(c.l, sqrt(cSq), Lab.Lab.hue(c), c.alpha)
 		return Lch.Lch.new(c.l, 0.0, 0.0, c.alpha)
 
+	## Converts a color from LCH to LAB.
 	static func lch_to_lab(c: Lch.Lch) -> Lab.Lab:
 		var cr: float = max(0.0, c.c)
 		var hr: float = c.h * TAU
 		return Lab.Lab.new(c.l, cr * cos(hr), cr * sin(hr), c.alpha)
 
+	## Eases an origin angle to a destination angle along the shortest arc
+	## length -- clockwise or counter clockwise -- according to a factor in
+	## [0.0, 1.0]. The range can be customized, where typical arguments are
+	## TAU for radians, 360.0 for degrees and 1.0 for hues. If the factor is
+	## less than or equal to zero, returns the wrapped origin. If greater than
+	## or equal to one, returns the wrapped destination. Defaults to the origin
+	## if the wrapped origin and destination are the same.
 	static func lerp_angle_near(o: float, \
 		d: float, \
 		t: float = 0.5, \
@@ -45,8 +59,9 @@ class ClrUtils:
 				return u * o_wrapped + t * d_wrapped
 		return o_wrapped
 
+	## Converts a color from linear sRGB to SR LAB 2. See Jan Behrens,
+	## https://www.magnetkern.de/srlab2.html .
 	static func linear_rgb_to_sr_lab_2(c: Rgb.Rgb) -> Lab.Lab:
-		# https://www.magnetkern.de/srlab2.html
 		var rl: float = c.r
 		var gl: float = c.g
 		var bl: float = c.b
@@ -70,10 +85,14 @@ class ClrUtils:
 		var b: float = 63.9569 * x1 + 108.4576 * y1 - 172.4152 * z1
 	
 		return Lab.Lab.new(l, a, b, c.alpha)
-		
+	
+	## Converts a color from linear sRGB to gamma SR LCH.
 	static func linear_rgb_to_sr_lch(c: Rgb.Rgb) -> Lch.Lch:
 		return ClrUtils.lab_to_lch(ClrUtils.linear_rgb_to_sr_lab_2(c))
 
+	## Mixes two colors in gamma sRGB by a factor in [0.0, 1.0]. If the factor
+	## is less than or equal to zero, returns the origin by value. If greater
+	## than or equal to one, returns the destination by value.
 	static func mix_gamma_rgb(o: Rgb.Rgb, d: Rgb.Rgb, t: float = 0.5) -> Rgb.Rgb:
 		if t <= 0.0: return Rgb.Rgb.new(o.r, o.g, o.b, o.alpha)
 		if t >= 1.0: return Rgb.Rgb.new(d.r, d.g, d.b, d.alpha)
@@ -87,6 +106,9 @@ class ClrUtils:
 			u * ol.b + t * dl.b,
 			u * ol.alpha + t * dl.alpha))
 
+	## Mixes two colors in LAB by a factor in [0.0, 1.0]. If the factor
+	## is less than or equal to zero, returns the origin by value. If greater
+	## than or equal to one, returns the destination by value.
 	static func mix_lab(o: Lab.Lab, d: Lab.Lab, t: float = 0.5) -> Lab.Lab:
 		if t <= 0.0: return Lab.Lab.new(o.l, o.a, o.b, o.alpha)
 		if t >= 1.0: return Lab.Lab.new(d.l, d.a, d.b, d.alpha)
@@ -98,6 +120,10 @@ class ClrUtils:
 			u * o.b + t * d.b,
 			u * o.alpha + t * d.alpha)
 
+	## Mixes two colors in LCH by a factor in [0.0, 1.0]. If the factor
+	## is less than or equal to zero, returns the origin by value. If greater
+	## than or equal to one, returns the destination by value. Eases the hue
+	## according to its shortest arc length.
 	static func mix_lch(o: Lch.Lch, d: Lch.Lch, t: float = 0.5) -> Lch.Lch:
 		if t <= 0.0: return Lch.Lch.new(o.l, o.c, o.h, o.alpha)
 		if t >= 1.0: return Lch.Lch.new(d.l, d.c, d.h, d.alpha)
@@ -137,6 +163,9 @@ class ClrUtils:
 		var ch: float = ClrUtils.lerp_angle_near(o.h, d.h, t, 1.0)
 		return Lch.Lch.new(cl, cc, ch, c_alpha)
 
+	## Mixes two colors in linear sRGB by a factor in [0.0, 1.0]. If the factor
+	## is less than or equal to zero, returns the origin by value. If greater
+	## than or equal to one, returns the destination by value.
 	static func mix_linear_rgb(o: Rgb.Rgb, \
 		d: Rgb.Rgb, \
 		t: float = 0.5) -> Rgb.Rgb:
@@ -150,11 +179,13 @@ class ClrUtils:
 			u * o.b + t * d.b,
 			u * o.alpha + t * d.alpha)
 
+	## Converts a color from SR LAB 2 to gamma sRGB.
 	static func sr_lab_2_to_gamma_rgb(c: Lab.Lab) -> Rgb.Rgb:
 		return Rgb.Rgb.linear_to_gamma(ClrUtils.sr_lab_2_to_linear_rgb(c))
 
+	## Converts a color from SR LAB 2 to linear sRGB. See Jan Behrens,
+	## https://www.magnetkern.de/srlab2.html .
 	static func sr_lab_2_to_linear_rgb(c: Lab.Lab) -> Rgb.Rgb:
-		# https://www.magnetkern.de/srlab2.html
 		var l: float = c.l
 		var a: float = c.a
 		var b: float = c.b
@@ -180,9 +211,11 @@ class ClrUtils:
 
 		return Rgb.Rgb.new(rl, gl, bl, c.alpha)
 
+	## Converts a color from SR LCH to gamma sRGB.
 	static func sr_lch_to_gamma_rgb(c: Lch.Lch) -> Rgb.Rgb:
 		return Rgb.Rgb.linear_to_gamma(ClrUtils.sr_lab_2_to_linear_rgb(
 			ClrUtils.lch_to_lab(c)))
 
+	## Converts a color from SR LCH to linear sRGB.
 	static func sr_lch_to_linear_rgb(c: Lch.Lch) -> Rgb.Rgb:
 		return ClrUtils.sr_lab_2_to_linear_rgb(ClrUtils.lch_to_lab(c))
