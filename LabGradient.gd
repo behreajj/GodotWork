@@ -7,7 +7,8 @@ var keys: Array
 ## Gradient evaluation presets.
 enum Easing { LAB, LCH_CCW, LCH_CW, LCH_FAR, LCH_NEAR }
 
-## Creates a new gradient from an array of keys.
+## Creates a new gradient from an array of keys. The array is assigned by
+## reference.
 func _init(lab_keys: Array):
     self.keys = lab_keys
 
@@ -81,6 +82,30 @@ static func eval(cg: LabGradient, \
     else:
         return ClrUtils.mix_lab(prev_color, next_color, t_mapped)
 
+## Evaluates a range of samples given a start and stop point. Returns an array
+## of LAB colors.
+static func eval_range(cg: LabGradient, \
+    count: int, \
+    preset: LabGradient.Easing = LabGradient.Easing.LAB, \
+    start: float = 0.0, \
+    stop: float = 1.0) -> Array:
+
+    var count_verif: int = max(2, abs(count))
+    var start_verif: float = max(0.0, start)
+    var stop_verif: float = min(1.0, stop)
+    var i_to_fac: float = 1.0 / (count_verif - 1.0)
+    var samples = []
+
+    var i: int = 0
+    while i < count_verif:
+        var fac: float = i * i_to_fac
+        var step: float = (1.0 - fac) * start_verif + fac * stop_verif
+        var lab: Lab = LabGradient.eval(cg, step, preset)
+        samples.push_back(lab)
+        i = i + 1
+
+    return samples
+
 ## Creates a gradient from an array of LAB colors. If the array's length is
 ## 0, then returns a black and white gradient. If the array's length is 1,
 ## then places the color between black and white.
@@ -107,6 +132,83 @@ static func from_colors_lab(cs: Array) -> LabGradient:
         i = i + 1
 
     return LabGradient.new(ks)
+
+## Creates a gradient where the keys are in reverse order. The source gradient's
+## colors are copied to the reversed by value.
+static func reversed(source: LabGradient) -> LabGradient:
+    var ks_source: Array = source.keys
+    var ks_target: Array = []
+    var len_ks: int = ks_source.size()
+
+    var i: int = 0
+    while i < len_ks:
+        var k_source: LabKey = ks_source[i]
+        var step_source: float = k_source.step
+        var color_source: Lab = k_source.color
+
+        var step_target: float = 1.0 - step_source
+        var color_target: Lab = Lab.new(
+            color_source.l,
+            color_source.a,
+            color_source.b,
+            color_source.alpha)
+        var k_target: LabKey = LabKey.new(step_target, color_target)
+
+        ks_target.push_back(k_target)
+        i = i + 1
+
+    ks_target.reverse()
+    return LabGradient.new(ks_target)
+
+## Creates a gradient from the standard RGB primaries and secondiares: red,
+## yellow, green, cyan, blue and magenta. Red is included twice, at the first
+## and last key.
+static func rgb() -> LabGradient:
+    return LabGradient.new([
+        LabKey.new(0.0, Lab.red()),
+        LabKey.new(0.16666666666667, Lab.yellow()),
+        LabKey.new(0.33333333333333, Lab.green()),
+        LabKey.new(0.5, Lab.cyan()),
+        LabKey.new(0.66666666666667, Lab.blue()),
+        LabKey.new(0.83333333333333, Lab.magenta()),
+        LabKey.new(1.0, Lab.red())
+    ])
+
+## Creates a gradient that simulates a red-yellow-blue wheel where yellow is the
+## brightest color and purple is the darkest. Red is included twice, at the
+## first and last key.
+static func ryb() -> LabGradient:
+    return LabGradient.new([
+        LabKey.new(0.0, Lab.new(
+            39.0502325875047,
+            62.1913263950166,
+            53.8350374095145, 1.0)),
+        LabKey.new(0.16666666666667, Lab.new(
+            66.1750712486991,
+            13.8165954011947,
+            72.5026791646071, 1.0)),
+        LabKey.new(0.33333333333333, Lab.new(
+            97.0986480894659,
+            -33.8687299475305,
+            87.8639689718856, 1.0)),
+        LabKey.new(0.5, Lab.new(
+            66.0894625726177,
+            -45.3366282555715,
+            54.4551582873687, 1.0)),
+        LabKey.new(0.66666666666667, Lab.new(
+            37.0555560083937,
+            -7.58274627896071,
+            -92.7766323892714, 1.0)),
+        LabKey.new(0.83333333333333, Lab.new(
+            17.9616504201505,
+            38.3366437364077,
+            -42.0277981982295,
+            1.0)),
+        LabKey.new(1.0, Lab.new(
+            39.0502325875047,
+            62.1913263950166,
+            53.8350374095145, 1.0))
+    ])
 
 ## Renders a gradient as a string in JSON format.
 static func to_json_string(cg: LabGradient) -> String:

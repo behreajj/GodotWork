@@ -58,6 +58,13 @@ static func clamp_01(c: Rgb) -> Rgb:
 static func copy_alpha(o: Rgb, d: Rgb) -> Rgb:
     return Rgb.new(o.r, o.g, o.b, d.alpha)
 
+## Creates a color from integers in the range [0, 255].
+static func from_bytes(r255: int = 255, \
+    g255: int = 255, \
+    b255: int = 255, \
+    a255: int = 255) -> Rgb:
+    return Rgb.new(r255 / 255.0, g255 / 255.0, b255 / 255.0, a255 / 255.0)
+
 ## Converts a color from gamma sRGB to linear sRGB.
 static func gamma_to_linear(c: Rgb) -> Rgb:
     var lr: float = c.r
