@@ -89,12 +89,12 @@ static func gray_gamma(c: Rgb) -> Rgb:
     var rel_lum: float = 0.21264935 * linear.r \
         + 0.71516913 * linear.g \
         + 0.07218152 * linear.b
-    var gr: float = rel_lum
-    if gr <=  0.04045:
-        gr = gr * 0.077399380804954
+    var v: float = rel_lum
+    if v <=  0.04045:
+        v = v / 12.92
     else:
-        gr = pow((gr + 0.055) * 0.9478672985782, 2.4)
-    return Rgb.new(gr, gr, gr, c.alpha)
+        v = pow((v + 0.055) / 1.055, 2.4)
+    return Rgb.new(v, v, v, c.alpha)
 
 ## Finds a grayscale version of the color, assuming the color is in linear
 ## sRGB. Uses the coefficients 0.213, 0.715 and 0.072.
@@ -162,17 +162,17 @@ static func tone_map_aces_gamma(c: Rgb) -> Rgb:
 ## For colors which exceed the range [0.0, 1.0] in linear RGB, applies
 ## ACES tone mapping algorithm. See https://64.github.io/tonemapping/ .
 static func tone_map_aces_linear(c: Rgb) -> Rgb:
-    var rFrwrd: float = 0.59719 * c.r + 0.35458 * c.g + 0.04823 * c.b
-    var gFrwrd: float = 0.076 * c.r + 0.90834 * c.g + 0.01566 * c.b
-    var bFrwrd: float = 0.0284 * c.r + 0.13383 * c.g + 0.83777 * c.b
+    var r_frwrd: float = 0.59719 * c.r + 0.35458 * c.g + 0.04823 * c.b
+    var g_frwrd: float = 0.076 * c.r + 0.90834 * c.g + 0.01566 * c.b
+    var b_frwrd: float = 0.0284 * c.r + 0.13383 * c.g + 0.83777 * c.b
 
-    var ar: float = rFrwrd * (rFrwrd + 0.0245786) - 0.000090537
-    var ag: float = gFrwrd * (gFrwrd + 0.0245786) - 0.000090537
-    var ab: float = bFrwrd * (bFrwrd + 0.0245786) - 0.000090537
+    var ar: float = r_frwrd * (r_frwrd + 0.0245786) - 0.000090537
+    var ag: float = g_frwrd * (g_frwrd + 0.0245786) - 0.000090537
+    var ab: float = b_frwrd * (b_frwrd + 0.0245786) - 0.000090537
 
-    var br: float = rFrwrd * (0.983729 * rFrwrd + 0.432951) + 0.238081
-    var bg: float = gFrwrd * (0.983729 * gFrwrd + 0.432951) + 0.238081
-    var bb: float = bFrwrd * (0.983729 * bFrwrd + 0.432951) + 0.238081
+    var br: float = r_frwrd * (0.983729 * r_frwrd + 0.432951) + 0.238081
+    var bg: float = g_frwrd * (0.983729 * g_frwrd + 0.432951) + 0.238081
+    var bb: float = b_frwrd * (0.983729 * b_frwrd + 0.432951) + 0.238081
 
     var cr: float = 0.0
     var cg: float = 0.0
@@ -182,14 +182,14 @@ static func tone_map_aces_linear(c: Rgb) -> Rgb:
     if bg != 0.0: cg = ag / bg
     if bb != 0.0: cb = ab / bb
 
-    var rBckwd: float = 1.60475 * cr - 0.53108 * cg - 0.07367 * cb
-    var gBckwd: float = -0.10208 * cr + 1.10813 * cg - 0.00605 * cb
-    var bBckwd: float = -0.00327 * cr - 0.07276 * cg + 1.07602 * cb
+    var r_bckwd: float = 1.60475 * cr - 0.53108 * cg - 0.07367 * cb
+    var g_bckwd: float = -0.10208 * cr + 1.10813 * cg - 0.00605 * cb
+    var b_bckwd: float = -0.00327 * cr - 0.07276 * cg + 1.07602 * cb
 
     return Rgb.new(
-        clamp(rBckwd, 0.0, 1.0),
-        clamp(gBckwd, 0.0, 1.0),
-        clamp(bBckwd, 0.0, 1.0),
+        clamp(r_bckwd, 0.0, 1.0),
+        clamp(g_bckwd, 0.0, 1.0),
+        clamp(b_bckwd, 0.0, 1.0),
         clamp(c.alpha, 0.0, 1.0))
 
 ## Finds the color expressed as a 32 bit integer. Clamps the color's channels
@@ -233,8 +233,7 @@ static func unpremul(c: Rgb) -> Rgb:
         return Rgb.clear_black()
     elif t >= 1.0:
         return Rgb.opaque(c)
-    var tInv: float = 1.0 / t
-    return Rgb.new(c.r * tInv, c.g * tInv, c.b * tInv, t)
+    return Rgb.new(c.r / t, c.g / t, c.b / t, t)
 
 ## Creates a preset color for opaque black.
 static func black() -> Rgb:

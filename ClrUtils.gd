@@ -20,7 +20,7 @@ static func lab_to_lch(c: Lab) -> Lch:
 
 ## Converts a color from LCH to LAB.
 static func lch_to_lab(c: Lch) -> Lab:
-    var cr: float = max(0.0, c.c)
+    var cr: float = max(0.0, abs(c.c))
     var hr: float = c.h * TAU
     return Lab.new(c.l, cr * cos(hr), cr * sin(hr), c.alpha)
 
@@ -118,22 +118,27 @@ static func mix_lch(o: Lch, \
     var cl: float = u * o.l + t * d.l
     var c_alpha: float = u * o.alpha + t * d.alpha
 
-    var o_gray = o.c < 0.000001
-    var d_gray = o.c < 0.000001
-    if o_gray and d_gray:
+    var oc: float = max(0.0, abs(o.c))
+    var dc: float = max(0.0, abs(d.c))
+    var o_is_gray = oc < 0.000001
+    var d_is_gray = dc < 0.000001
+
+    if o_is_gray and d_is_gray:
         return Lch.new(cl, 0.0, 0.0, c_alpha)
-    elif o_gray or d_gray:
+    elif o_is_gray or d_is_gray:
         var oa: float = 0.0
         var ob: float = 0.0
-        if not o_gray:
-            oa = o.c * cos(o.h)
-            ob = o.c * sin(o.h)
+        if not o_is_gray:
+            var oh_radians: float = o.h * TAU
+            oa = oc * cos(oh_radians)
+            ob = oc * sin(oh_radians)
 
         var da: float = 0.0
         var db: float = 0.0
-        if not d_gray:
-            da = d.c * cos(d.h)
-            db = d.c * sin(d.h)
+        if not d_is_gray:
+            var dh_radians: float = d.h * TAU
+            da = dc * cos(dh_radians)
+            db = dc * sin(dh_radians)
 
         var ca: float = u * oa + t * da
         var cb: float = u * ob + t * db
@@ -145,8 +150,7 @@ static func mix_lch(o: Lch, \
     # Godot built-in lerp_angle may result in negative hues.
     # var ch: float = lerp_angle(o.h * TAU, d.h * TAU, t) / TAU
     var ch: float = MathUtils.mix_angle(o.h, d.h, t, 1.0, dir)
-
-    var cc: float = u * o.c + t * d.c
+    var cc: float = u * oc + t * dc
     return Lch.new(cl, cc, ch, c_alpha)
 
 ## Mixes two colors in linear sRGB by a factor in [0.0, 1.0].
