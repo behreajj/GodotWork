@@ -13,9 +13,9 @@ static func gamma_rgb_to_sr_lch(c: Rgb) -> Lch:
 
 ## Converts a color from LAB to LCH.
 static func lab_to_lch(c: Lab) -> Lch:
-    var cSq: float = Lab.chroma_sq(c)
-    if cSq > 0.000001:
-        return Lch.new(c.l, sqrt(cSq), Lab.hue(c), c.alpha)
+    var c_sq: float = Lab.chroma_sq(c)
+    if c_sq > 0.000001:
+        return Lch.new(c.l, sqrt(c_sq), Lab.hue(c), c.alpha)
     return Lch.new(c.l, 0.0, 0.0, c.alpha)
 
 ## Converts a color from LCH to LAB.
@@ -23,38 +23,6 @@ static func lch_to_lab(c: Lch) -> Lab:
     var cr: float = max(0.0, c.c)
     var hr: float = c.h * TAU
     return Lab.new(c.l, cr * cos(hr), cr * sin(hr), c.alpha)
-
-## Eases an origin angle to a destination angle along the shortest arc
-## length -- clockwise or counter clockwise -- according to a factor in
-## [0.0, 1.0]. The range can be customized, where typical arguments are
-## TAU for radians, 360.0 for degrees and 1.0 for hues. If the factor is
-## less than or equal to zero, returns the wrapped origin. If greater than
-## or equal to one, returns the wrapped destination. Defaults to the origin
-## if the wrapped origin and destination are the same.
-static func lerp_angle_near(o: float, \
-    d: float, \
-    t: float = 0.5, \
-    r: float = 1.0)-> float:
-    # range is a reserved keyword in GDScript.
-
-    var o_wrapped: float = fposmod(o, r)
-    if t <= 0.0: return o_wrapped
-
-    var d_wrapped: float = fposmod(d, r)
-    if t >= 1.0: return d_wrapped
-
-    var diff: float = d_wrapped - o_wrapped
-    if diff != 0.0:
-        var u: float = 1.0 - t
-        var r_half: float = r * 0.5
-        if o_wrapped < d_wrapped and diff > r_half:
-            return fposmod(u * (o_wrapped + r) + t * d_wrapped, r)
-        elif o_wrapped > d_wrapped and diff < -r_half:
-            return fposmod(u * o_wrapped + t * (d_wrapped + r), r)
-        else:
-            return u * o_wrapped + t * d_wrapped
-
-    return o_wrapped
 
 ## Converts a color from linear sRGB to SR LAB 2. See Jan Behrens,
 ## https://www.magnetkern.de/srlab2.html .
@@ -104,29 +72,13 @@ static func linear_rgb_to_sr_lab_2(c: Rgb) -> Lab:
 static func linear_rgb_to_sr_lch(c: Rgb) -> Lch:
     return ClrUtils.lab_to_lch(ClrUtils.linear_rgb_to_sr_lab_2(c))
 
-## Mixes two colors in gamma sRGB by a factor in [0.0, 1.0]. If the factor
-## is less than or equal to zero, returns the origin by value. If greater
-## than or equal to one, returns the destination by value.
+## Mixes two colors in gamma sRGB by a factor in [0.0, 1.0].
 static func mix_gamma_rgb(o: Rgb, d: Rgb, t: float = 0.5) -> Rgb:
-    if t <= 0.0: return Rgb.new(o.r, o.g, o.b, o.alpha)
-    if t >= 1.0: return Rgb.new(d.r, d.g, d.b, d.alpha)
+    return Rgb.linear_to_gamma(ClrUtils.mix_linear_rgb(
+        Rgb.gamma_to_linear(o), Rgb.gamma_to_linear(d), t))
 
-    var u: float = 1.0 - t
-    var ol: Rgb = Rgb.gamma_to_linear(o)
-    var dl: Rgb = Rgb.gamma_to_linear(d)
-    return Rgb.linear_to_gamma(Rgb.new(
-        u * ol.r + t * dl.r,
-        u * ol.g + t * dl.g,
-        u * ol.b + t * dl.b,
-        u * ol.alpha + t * dl.alpha))
-
-## Mixes two colors in LAB by a factor in [0.0, 1.0]. If the factor
-## is less than or equal to zero, returns the origin by value. If greater
-## than or equal to one, returns the destination by value.
+## Mixes two colors in LAB by a factor in [0.0, 1.0].
 static func mix_lab(o: Lab, d: Lab, t: float = 0.5) -> Lab:
-    if t <= 0.0: return Lab.new(o.l, o.a, o.b, o.alpha)
-    if t >= 1.0: return Lab.new(d.l, d.a, d.b, d.alpha)
-
     var u: float = 1.0 - t
     return Lab.new(
         u * o.l + t * d.l,
@@ -134,13 +86,33 @@ static func mix_lab(o: Lab, d: Lab, t: float = 0.5) -> Lab:
         u * o.b + t * d.b,
         u * o.alpha + t * d.alpha)
 
-## Mixes two colors in LCH by a factor in [0.0, 1.0]. If the factor
-## is less than or equal to zero, returns the origin by value. If greater
-## than or equal to one, returns the destination by value. Eases the hue
-## according to its shortest arc length.
-static func mix_lch(o: Lch, d: Lch, t: float = 0.5) -> Lch:
-    if t <= 0.0: return Lch.new(o.l, o.c, o.h, o.alpha)
-    if t >= 1.0: return Lch.new(d.l, d.c, d.h, d.alpha)
+## Mixes two colors in LAB by a factor in [0.0, 1.0]. A convenience so as to
+## avoid converting to and mixing in LCH.
+static func mix_lab_polar(o: Lab, \
+    d: Lab, \
+    t: float = 0.5, \
+    dir: MathUtils.PolarEasing = MathUtils.PolarEasing.NEAR) -> Lab:
+
+    var ocsq: float = Lab.chroma_sq(o)
+    var dcsq: float = Lab.chroma_sq(d)
+    if ocsq < 0.000001 or dcsq < 0.000001:
+        return ClrUtils.mix_lab(o, d, t)
+
+    var u: float = 1.0 - t
+    var cc: float = u * sqrt(ocsq) + t * sqrt(dcsq)
+    var ch: float = MathUtils.mix_angle(
+        atan2(o.b, o.a), atan2(d.b, d.a), t, TAU, dir)
+    return Lab.new(
+        u * o.l + t * d.l,
+        cc * cos(ch),
+        cc * sin(ch),
+        u * o.alpha + t * d.alpha)
+
+## Mixes two colors in LCH by a factor in [0.0, 1.0].
+static func mix_lch(o: Lch, \
+    d: Lch, \
+    t: float = 0.5, \
+    dir: MathUtils.PolarEasing = MathUtils.PolarEasing.NEAR) -> Lch:
 
     var u: float = 1.0 - t
     var cl: float = u * o.l + t * d.l
@@ -170,20 +142,15 @@ static func mix_lch(o: Lch, d: Lch, t: float = 0.5) -> Lch:
 
         return Lch.new(cl, cc, ch, c_alpha)
 
-    var cc: float = u * o.c + t * d.c
-
-    # lerp_angle may result in negative hues.
+    # Godot built-in lerp_angle may result in negative hues.
     # var ch: float = lerp_angle(o.h * TAU, d.h * TAU, t) / TAU
-    var ch: float = ClrUtils.lerp_angle_near(o.h, d.h, t, 1.0)
+    var ch: float = MathUtils.mix_angle(o.h, d.h, t, 1.0, dir)
+
+    var cc: float = u * o.c + t * d.c
     return Lch.new(cl, cc, ch, c_alpha)
 
-## Mixes two colors in linear sRGB by a factor in [0.0, 1.0]. If the factor
-## is less than or equal to zero, returns the origin by value. If greater
-## than or equal to one, returns the destination by value.
+## Mixes two colors in linear sRGB by a factor in [0.0, 1.0].
 static func mix_linear_rgb(o: Rgb, d: Rgb, t: float = 0.5) -> Rgb:
-    if t <= 0.0: return Rgb.new(o.r, o.g, o.b, o.alpha)
-    if t >= 1.0: return Rgb.new(d.r, d.g, d.b, d.alpha)
-
     var u: float = 1.0 - t
     return Rgb.new(
         u * o.r + t * d.r,

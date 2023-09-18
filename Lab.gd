@@ -181,7 +181,7 @@ static func rescale_chroma(c: Lab, scalar: float) -> Lab:
     return Lab.gray(c)
 
 ## Returns a color with the source's components, but a and b rotated by
-## the argument specified..
+## the argument specified.
 static func rotate_hue(c: Lab, hue_shift: float) -> Lab:
     var radians: float = hue_shift * TAU
     return Lab._rotate_hue_internal(c, cos(radians), sin(radians))

@@ -29,6 +29,22 @@ func _init(rd: float = 1.0, \
 func _to_string() -> String:
     return Rgb.to_json_string(self)
 
+## Finds the color's alpha expressed as a byte in [0, 255].
+static func byte_alpha(c: Rgb) -> int:
+    return int(clamp(c.alpha, 0.0, 1.0) * 255 + 0.5)
+
+## Finds the color's blue channel expressed as a byte in [0, 255].
+static func byte_blue(c: Rgb) -> int:
+    return int(clamp(c.b, 0.0, 1.0) * 255 + 0.5)
+
+## Finds the color's green channel expressed as a byte in [0, 255].
+static func byte_green(c: Rgb) -> int:
+    return int(clamp(c.g, 0.0, 1.0) * 255 + 0.5)
+
+## Finds the color's red channel expressed as a byte in [0, 255].
+static func byte_red(c: Rgb) -> int:
+    return int(clamp(c.r, 0.0, 1.0) * 255 + 0.5)
+
 ## Clamps all color components to the range [0.0, 1.0].
 static func clamp_01(c: Rgb) -> Rgb:
     return Rgb.new( \
@@ -175,6 +191,32 @@ static func tone_map_aces_linear(c: Rgb) -> Rgb:
         clamp(gBckwd, 0.0, 1.0),
         clamp(bBckwd, 0.0, 1.0),
         clamp(c.alpha, 0.0, 1.0))
+
+## Finds the color expressed as a 32 bit integer. Clamps the color's channels
+## to [0, 255], i.e. uses saturation arithmetic. The channels are packed in
+## the order alpha, blue, green, red.
+static func to_abgr_32(c: Rgb) -> int:
+    return int(clamp(c.alpha, 0.0, 1.0) * 255 + 0.5) << 0x18 \
+        | int(clamp(c.b, 0.0, 1.0) * 255 + 0.5) << 0x10 \
+        | int(clamp(c.g, 0.0, 1.0) * 255 + 0.5) << 0x08 \
+        | int(clamp(c.r, 0.0, 1.0) * 255 + 0.5)
+
+## Finds the color expressed as a 32 bit integer. Clamps the color's channels
+## to [0, 255], i.e. uses saturation arithmetic. The channels are packed in
+## the order alpha, red, green, blue.
+static func to_argb_32(c: Rgb) -> int:
+    return int(clamp(c.alpha, 0.0, 1.0) * 255 + 0.5) << 0x18 \
+        | int(clamp(c.r, 0.0, 1.0) * 255 + 0.5) << 0x10 \
+        | int(clamp(c.g, 0.0, 1.0) * 255 + 0.5) << 0x08 \
+        | int(clamp(c.b, 0.0, 1.0) * 255 + 0.5)
+
+## Renders the color as a 6 digit, 24 bit hexadecimal string suitable for web
+## development. The channels are packed in the order red, green, blue. There is
+## no hashtag or '0x' prefix for the string.
+static func to_hex_web(c: Rgb) -> String:
+    return "%06x" % (int(clamp(c.r, 0.0, 1.0) * 255 + 0.5) << 0x10 \
+        | int(clamp(c.g, 0.0, 1.0) * 255 + 0.5) << 0x08 \
+        | int(clamp(c.b, 0.0, 1.0) * 255 + 0.5))
 
 ## Renders a color as a string in JSON format.
 static func to_json_string(c: Rgb) -> String:
