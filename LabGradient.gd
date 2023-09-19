@@ -224,9 +224,9 @@ static func to_svg_string(cg: LabGradient, \
     var sw_left: float = 0.0
     var sw_right: float = w_vrf
 
-    var w_str: String = "%.6f" % w_vrf
-    var h_str: String = "%.6f" % h_vrf
-    var h_mid_str: String = "%.6f" % h_vrf_half
+    var w_str: String = "%.1f" % w_vrf
+    var h_str: String = "%.1f" % h_vrf
+    var h_mid_str: String = "%.1f" % h_vrf_half
 
     var svgp: PackedStringArray = PackedStringArray()
     svgp.append("<svg ")
@@ -239,7 +239,7 @@ static func to_svg_string(cg: LabGradient, \
     svgp.append("<defs>\r\n")
     svgp.append("<linearGradient id=\"%s\" " % id)
     svgp.append("x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\">\r\n"
-        % [x1, y1, x2, y2] )
+        % [x1, y1, x2, y2])
 
     var sb_swatch: PackedStringArray = PackedStringArray()
     sb_swatch.append("<g id=\"swatches\">\r\n")
@@ -275,32 +275,16 @@ static func to_svg_string(cg: LabGradient, \
         var xl_str: String = "%.6f" % xl
         var xr_str: String = "%.6f" % xr
 
-        sb_swatch.append("<path id=\"")
-        sb_swatch.append("swatch")
-        sb_swatch.append("%03d" % i)
+        sb_swatch.append("<path id=\"swatch%03d\" " % i)
+        sb_swatch.append("d=\"M %s %s L %s %s L %s %s L %s %s Z\" " %
+            [
+                xl_str, h_mid_str,
+                xr_str, h_mid_str,
+                xr_str, h_str,
+                xl_str, h_str
+            ])
 
-        # TODO: Condense these with a single string format
-        sb_swatch.append("\" d=\"M ")
-        sb_swatch.append(xl_str)
-        sb_swatch.append(' ')
-        sb_swatch.append(h_mid_str)
-
-        sb_swatch.append(" L ")
-        sb_swatch.append(xr_str)
-        sb_swatch.append(' ')
-        sb_swatch.append(h_mid_str)
-
-        sb_swatch.append(" L ");
-        sb_swatch.append(xr_str)
-        sb_swatch.append(' ')
-        sb_swatch.append(h_str)
-
-        sb_swatch.append(" L ")
-        sb_swatch.append(xl_str)
-        sb_swatch.append(' ')
-        sb_swatch.append(h_str)
-
-        sb_swatch.append(" Z\" stroke=\"none")
+        sb_swatch.append("stroke=\"none")
         if include_opacity:
             sb_swatch.append("\" fill-opacity=\"")
             sb_swatch.append(t01_str)

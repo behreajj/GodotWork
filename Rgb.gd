@@ -151,9 +151,9 @@ static func grid_cartesian(cols: int = 8, \
     var i_to_step: float = 0.0
     var j_to_step: float = 0.0
 
-    if one_layer: h_to_step = 1.0 / (l_vrf - 1.0)
-    if one_row: i_to_step = 1.0 / (r_vrf - 1.0)
-    if one_col: j_to_step = 1.0 / (c_vrf - 1.0)
+    if not one_layer: h_to_step = 1.0 / (l_vrf - 1.0)
+    if not one_row: i_to_step = 1.0 / (r_vrf - 1.0)
+    if not one_col: j_to_step = 1.0 / (c_vrf - 1.0)
 
     var result: Array = []
     var rc_vrf: int = r_vrf * c_vrf
