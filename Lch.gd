@@ -23,6 +23,7 @@ func _init(lightness: float = 100.0, \
     chroma: float = 0.0, \
     hue: float = 0.0, \
     opacity: float = 1.0):
+
     self.l = lightness
     self.c = chroma
     self.h = hue
@@ -47,6 +48,7 @@ static func copy_light(o: Lch, d: Lch) -> Lch:
     return Lch.new(d.l, o.c, o.h, o.alpha)
 
 ## Finds a grayscale version of the color, where chroma is zero.
+## Retains the source's hue, even though it'd be undefined in grayscale.
 static func gray(lch: Lch) -> Lch:
     return Lch.new(lch.l, 0.0, lch.h, lch.alpha)
 
@@ -70,9 +72,7 @@ static func harmony_complement(lch: Lch) -> Array:
 
     var h180: float = lch.h + 0.5
 
-    return [
-        new(l_cmp, lch.c, h180 - floor(h180), lch.alpha)
-    ]
+    return [ new(l_cmp, lch.c, h180 - floor(h180), lch.alpha) ]
 
 ## Creates an array of 2 LAB colors at split hues from the source.
 ## The hues are 150 and 210 degrees away.
@@ -134,7 +134,7 @@ static func harmony_triadic(lch: Lch) -> Array:
 
 ## Finds an opaque version of the color, where the alpha is 1.0.
 static func opaque(lch: Lch) -> Lch:
-    return Lch.new(lch.l, lch.a, lch.b, 1.0)
+    return Lch.new(lch.l, lch.c, lch.h, 1.0)
 
 ## Renders a color as a string in JSON format.
 static func to_json_string(lch: Lch) -> String:

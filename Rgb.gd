@@ -20,10 +20,11 @@ func _init(rd: float = 1.0, \
     gr: float = 1.0, \
     bl: float = 1.0, \
     opacity: float = 1.0):
-    self.alpha = opacity
-    self.b = bl
-    self.g = gr
+
     self.r = rd
+    self.g = gr
+    self.b = bl
+    self.alpha = opacity
 
 ## Renders the color as a string in JSON format.
 func _to_string() -> String:
@@ -57,6 +58,22 @@ static func clamp_01(c: Rgb) -> Rgb:
 ## channels adopt the values of the left operand.
 static func copy_alpha(o: Rgb, d: Rgb) -> Rgb:
     return Rgb.new(o.r, o.g, o.b, d.alpha)
+
+## Creates a color from an integer with packed channels in 0xAABBGGRR order.
+static func from_abgr_32(c: int) -> Rgb:
+    return Rgb.new(
+        (c & 0xff) / 255.0,
+        ((c >> 0x08) & 0xff) / 255.0,
+        ((c >> 0x10) & 0xff) / 255.0,
+        ((c >> 0x18) & 0xff) / 255.0)
+
+## Creates a color from an integer with packed channels in 0xAARRGGBB order.
+static func from_argb_32(c: int) -> Rgb:
+    return Rgb.new(
+        ((c >> 0x10) & 0xff) / 255.0,
+        ((c >> 0x08) & 0xff) / 255.0,
+        (c & 0xff) / 255.0,
+        ((c >> 0x18) & 0xff) / 255.0)
 
 ## Creates a color from integers in the range [0, 255].
 static func from_bytes(r255: int = 255, \
@@ -110,6 +127,54 @@ static func gray_linear(c: Rgb) -> Rgb:
         + 0.71516913 * c.g \
         + 0.07218152 * c.b
     return Rgb.new(rel_lum, rel_lum, rel_lum, c.alpha)
+
+## Creates a 3D grid of colors in gamma sRGB, then returns them as a 1D array.
+## Red is associated with columns, or the x axis. Green is associated with rows,
+## or the y axis. Blue is associated with layers, or the z axis.
+static func grid_cartesian(cols: int = 8, \
+    rows: int = 8, \
+    layers: int = 8, \
+    opacity: float = 1.0) -> Array:
+
+    # TODO: Test
+
+    var t_vrf: float = clamp(opacity, 0.0, 1.0)
+    var l_vrf: int = max(1, layers)
+    var r_vrf: int = max(1, rows)
+    var c_vrf: int = max(1, cols)
+
+    var one_layer: bool = l_vrf == 1
+    var one_row: bool = r_vrf == 1
+    var one_col: bool = c_vrf == 1
+
+    var h_to_step: float = 0.0
+    var i_to_step: float = 0.0
+    var j_to_step: float = 0.0
+
+    if one_layer: h_to_step = 1.0 / (l_vrf - 1.0)
+    if one_row: i_to_step = 1.0 / (r_vrf - 1.0)
+    if one_col: j_to_step = 1.0 / (c_vrf - 1.0)
+
+    var result: Array = []
+    var rc_vrf: int = r_vrf * c_vrf
+    var len3: int = l_vrf * rc_vrf
+    var k: int = 0
+    while k < len3:
+        @warning_ignore("integer_division")
+        var h: int = k / rc_vrf
+        var m: int = k - h * rc_vrf
+        @warning_ignore("integer_division")
+        var i: int = m / c_vrf
+        var j: int = m % c_vrf
+
+        result.append(Rgb.new(
+            j * j_to_step,
+            i * i_to_step,
+            h * h_to_step,
+            t_vrf))
+        k = k + 1
+
+    return result
 
 ## Evaluates whether a color is in gamut, i.e., whether the red, green and
 ## blue channels are all within [0.0, 1.0] plus or minus an epsilon. The

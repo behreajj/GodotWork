@@ -25,6 +25,7 @@ func _init(lightness: float = 100.0, \
     green_magenta: float = 0.0, \
     blue_yellow: float = 0.0, \
     opacity: float = 1.0):
+
     self.l = lightness
     self.a = green_magenta
     self.b = blue_yellow
@@ -60,6 +61,73 @@ static func copy_light(o: Lab, d: Lab) -> Lab:
 ## Finds a grayscale version of the color, where a and b are zero.
 static func gray(c: Lab) -> Lab:
     return Lab.new(c.l, 0.0, 0.0, c.alpha)
+
+## Creates a 3D grid of colors in LAB, then returns them as a 1D array.
+## Green to magenta is associated with columns, or the x axis.
+## Blue to yellow is associated with rows, or the y axis.
+## Lightness is associated with layers, or the z axis.
+static func grid_cartesian(cols: int = 8, \
+    rows: int = 8, \
+    layers: int = 8, \
+    opacity: float = 1.0, \
+    ab_bounds: float = 111.0) -> Array:
+
+    # TODO: Test
+
+    var ab_bds_vrf: float = abs(ab_bounds)
+    var t_vrf: float = clamp(opacity, 0.0, 1.0)
+    var l_vrf: int = max(1, layers)
+    var r_vrf: int = max(1, rows)
+    var c_vrf: int = max(1, cols)
+
+    var one_layer: bool = l_vrf == 1
+    var one_row: bool = r_vrf == 1
+    var one_col: bool = c_vrf == 1
+
+    var h_to_step: float = 0.0
+    var i_to_step: float = 0.0
+    var j_to_step: float = 0.0
+
+    var h_off: float = 0.0
+    var i_off: float = 0.0
+    var j_off: float = 0.0
+
+    if one_layer:
+        h_to_step = 1.0 / (l_vrf - 1.0)
+        h_off = 0.5
+
+    if one_row:
+        i_to_step = 1.0 / (r_vrf - 1.0)
+        i_off = 0.5
+
+    if one_col:
+        j_to_step = 1.0 / (c_vrf - 1.0)
+        j_off = 0.5
+
+    var result: Array = []
+    var rc_vrf: int = r_vrf * c_vrf
+    var len3: int = l_vrf * rc_vrf
+    var k: int = 0
+    while k < len3:
+        @warning_ignore("integer_division")
+        var h: int = k / rc_vrf
+        var m: int = k - h * rc_vrf
+        @warning_ignore("integer_division")
+        var i: int = m / c_vrf
+        var j: int = m % c_vrf
+
+        var j_fac: float = j * j_to_step + j_off
+        var i_fac: float = i * i_to_step + i_off
+        var h_fac: float = h * h_to_step + h_off
+
+        result.append(Lab.new(
+            h_fac * 100.0,
+            (1.0 - j_fac) * -ab_bds_vrf + j_fac * ab_bds_vrf,
+            (1.0 - i_fac) * -ab_bds_vrf + i_fac * ab_bds_vrf,
+            t_vrf))
+        k = k + 1
+
+    return result
 
 ## Creates an array of 2 LAB colors at analogous hues from the source.
 ## The hues are positive and negative 30 degrees away.
