@@ -196,11 +196,12 @@ static func to_json_string(cg: LabGradient) -> String:
     cg_str = cg_str + "]}"
     return cg_str
 
-## Renders a gradient as a string in SVG format. The gradient is not sampled.
-## Rather its keys are reproduced, and the swatches per key are uniformly
-## distributed. SVG gradients use gamma sRGB interpolation by default, so the
-## appearance will differ from the LAB gradient.
+## Renders a gradient as a string in SVG format. SVG gradients use gamma sRGB
+## interpolation by default, so the LAB gradient is sampled by a count. With
+## more samples, the SVG gradient will more closely approximate the original.
 static func to_svg_string(cg: LabGradient, \
+    count: int = 16, \
+    preset: LabGradient.Easing = LabGradient.Easing.LAB, \
     id: String = "godotGradient",
     w: int = 768, \
     h: int = 64, \
@@ -209,9 +210,11 @@ static func to_svg_string(cg: LabGradient, \
     x2: float = 1.0, \
     y2: float = 0.5) -> String:
 
-    # TODO: The problem with the filter is that it doesn't just mix between
-    # stops in linear, it applies a linear filter to the whole image, including
-    # the stops.
+    # Step is for gradient interpolation, fac is for discrete swatches that
+    # have a left and right edge.
+    var count_verif: int = clamp(abs(count), 2, 256)
+    var i_to_step: float = 1.0 / (count_verif - 1.0)
+    var i_to_fac: float = 1.0 / count_verif
 
     var w_vrf: int = max(3, w)
     var h_vrf: int = max(3, h)
@@ -229,59 +232,43 @@ static func to_svg_string(cg: LabGradient, \
     svgp.append("<svg ")
     svgp.append("xmlns=\"http://www.w3.org/2000/svg\" ")
     svgp.append("xmlns:xlink=\"http://www.w3.org/1999/xlink\" ")
-    svgp.append("shape-rendering=\"geometricPrecision\" ")
-    svgp.append("viewBox=\"0 0 ")
-    svgp.append(str(w_vrf))
-    svgp.append(' ')
-    svgp.append(str(h_vrf))
-    svgp.append("\">\r\n")
+    svgp.append("width=\"%d\" height=\"%d\" " % [ w_vrf, h_vrf ])
+    svgp.append("viewBox=\"0 0 %d %d\" " % [ w_vrf, h_vrf ])
+    svgp.append("preserveAspectRatio=\"xMidYMid slice\">\r\n")
 
     svgp.append("<defs>\r\n")
-    svgp.append("<linearGradient id=\"")
-    svgp.append(id)
-    svgp.append("\" x1=\"")
-    svgp.append("%.6f" % x1)
-    svgp.append("\" y1=\"")
-    svgp.append("%.6f" % y1)
-    svgp.append("\" x2=\"")
-    svgp.append("%.6f" % x2)
-    svgp.append("\" y2=\"")
-    svgp.append("%.6f" % y2)
-    svgp.append("\" color-interpolation=\"linearRGB\">\r\n")
+    svgp.append("<linearGradient id=\"%s\" " % id)
+    svgp.append("x1=\"%.6f\" y1=\"%.6f\" x2=\"%.6f\" y2=\"%.6f\">\r\n"
+        % [x1, y1, x2, y2] )
 
     var sb_swatch: PackedStringArray = PackedStringArray()
     sb_swatch.append("<g id=\"swatches\">\r\n")
 
-    var ks: Array = cg.keys
-    var len_ks: int = ks.size()
-    var to_fac: float = 1.0
-    if len_ks > 1: to_fac = 1.0 / len_ks
-
     var i: int = 0
-    while i < len_ks:
-        var k: LabKey = ks[i]
-        var step: float = k.step
-        var lab: Lab = k.color
-        var srgb_linear: Rgb = ClrUtils.sr_lab_2_to_linear_rgb(lab)
-        var srgb_gamma = Rgb.linear_to_gamma(srgb_linear)
-        var hex_gamma = Rgb.to_hex_web(srgb_gamma)
-        var hex_color_stop: String = hex_gamma
+    while i < count_verif:
+        var step: float = i * i_to_step
 
-        var t01 = clamp(lab.alpha, 0.0, 1.0)
-        var t01_str = "%.6f" % t01
+        var lab: Lab = LabGradient.eval(cg, step, preset)
+        var srgb_linear: Rgb = ClrUtils.sr_lab_2_to_linear_rgb(lab)
+        var srgb_gamma: Rgb = Rgb.linear_to_gamma(srgb_linear)
+        var hex_gamma: String = Rgb.to_hex_web(srgb_gamma)
+
+        var t01: float = clamp(lab.alpha, 0.0, 1.0)
+        var t01_str: String = "%.6f" % t01
+        var include_opacity: bool = t01 < 1.0
 
         svgp.append("<stop offset=\"")
         svgp.append("%.6f" % step)
-        if t01 < 1.0:
+        if include_opacity:
             svgp.append("\" stop-opacity=\"")
             svgp.append(t01_str)
         svgp.append("\" stop-color=\"#")
-        svgp.append(hex_color_stop)
+        svgp.append(hex_gamma)
         svgp.append("\" />")
-        if i < len_ks - 1: svgp.append("\r\n")
+        if i < count_verif - 1: svgp.append("\r\n")
 
-        var fac0: float = i * to_fac
-        var fac1: float = (i + 1) * to_fac
+        var fac0: float = i * i_to_fac
+        var fac1: float = (i + 1) * i_to_fac
         var xl: float = ( 1.0 - fac0 ) * sw_left + fac0 * sw_right
         var xr: float = ( 1.0 - fac1 ) * sw_left + fac1 * sw_right
 
@@ -289,9 +276,10 @@ static func to_svg_string(cg: LabGradient, \
         var xr_str: String = "%.6f" % xr
 
         sb_swatch.append("<path id=\"")
-        sb_swatch.append("swatch.")
-        sb_swatch.append(str(i))
+        sb_swatch.append("swatch")
+        sb_swatch.append("%03d" % i)
 
+        # TODO: Condense these with a single string format
         sb_swatch.append("\" d=\"M ")
         sb_swatch.append(xl_str)
         sb_swatch.append(' ')
@@ -313,7 +301,7 @@ static func to_svg_string(cg: LabGradient, \
         sb_swatch.append(h_str)
 
         sb_swatch.append(" Z\" stroke=\"none")
-        if t01 < 1.0:
+        if include_opacity:
             sb_swatch.append("\" fill-opacity=\"")
             sb_swatch.append(t01_str)
         sb_swatch.append("\" fill=\"#")
