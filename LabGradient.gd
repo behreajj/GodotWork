@@ -198,8 +198,7 @@ static func to_json_string(cg: LabGradient) -> String:
 
 ## Renders a gradient as a string in SVG format. The gradient is not sampled.
 ## Rather its keys are reproduced, and the swatches per key are uniformly
-## distributed. SVG gradients use gamma sRGB interpolation default. A filter
-## can alter the gamma to create a linear sRGB interpolation. Either way, the
+## distributed. SVG gradients use gamma sRGB interpolation by default, so the
 ## appearance will differ from the LAB gradient.
 static func to_svg_string(cg: LabGradient, \
     id: String = "godotGradient",
@@ -208,13 +207,11 @@ static func to_svg_string(cg: LabGradient, \
     x1: float = 0.0, \
     y1: float = 0.5, \
     x2: float = 1.0, \
-    y2: float = 0.5,
-    use_linear_rgb: bool = false) -> String:
+    y2: float = 0.5) -> String:
 
-    # TODO: The problem with the filter approach as it stands is that it
-    # doesn't just mix between steps in linear, it applies linear to the whole
-    # image, including the stops. Maybe if linear rgb is used, convert srlab2
-    # to linear, then apply component transfer to go into gamma?
+    # TODO: The problem with the filter is that it doesn't just mix between
+    # stops in linear, it applies a linear filter to the whole image, including
+    # the stops.
 
     var w_vrf: int = max(3, w)
     var h_vrf: int = max(3, h)
@@ -240,14 +237,6 @@ static func to_svg_string(cg: LabGradient, \
     svgp.append("\">\r\n")
 
     svgp.append("<defs>\r\n")
-    if use_linear_rgb:
-        svgp.append("<filter id=\"gammaFilter\">\r\n")
-        svgp.append("<feComponentTransfer color-interpolation-filters=\"sRGB\">\r\n")
-        svgp.append("<feFuncR type=\"gamma\" exponent=\"0.454545\" />\r\n")
-        svgp.append("<feFuncG type=\"gamma\" exponent=\"0.454545\" />\r\n")
-        svgp.append("<feFuncB type=\"gamma\" exponent=\"0.454545\" />\r\n")
-        svgp.append("</feComponentTransfer>\r\n")
-        svgp.append("</filter>\r\n")
     svgp.append("<linearGradient id=\"")
     svgp.append(id)
     svgp.append("\" x1=\"")
@@ -258,7 +247,7 @@ static func to_svg_string(cg: LabGradient, \
     svgp.append("%.6f" % x2)
     svgp.append("\" y2=\"")
     svgp.append("%.6f" % y2)
-    svgp.append("\">\r\n")
+    svgp.append("\" color-interpolation=\"linearRGB\">\r\n")
 
     var sb_swatch: PackedStringArray = PackedStringArray()
     sb_swatch.append("<g id=\"swatches\">\r\n")
@@ -273,8 +262,11 @@ static func to_svg_string(cg: LabGradient, \
         var k: LabKey = ks[i]
         var step: float = k.step
         var lab: Lab = k.color
-        var srgb: Rgb = ClrUtils.sr_lab_2_to_gamma_rgb(lab)
-        var hex: String = Rgb.to_hex_web(srgb)
+        var srgb_linear: Rgb = ClrUtils.sr_lab_2_to_linear_rgb(lab)
+        var srgb_gamma = Rgb.linear_to_gamma(srgb_linear)
+        var hex_gamma = Rgb.to_hex_web(srgb_gamma)
+        var hex_color_stop: String = hex_gamma
+
         var t01 = clamp(lab.alpha, 0.0, 1.0)
         var t01_str = "%.6f" % t01
 
@@ -284,7 +276,7 @@ static func to_svg_string(cg: LabGradient, \
             svgp.append("\" stop-opacity=\"")
             svgp.append(t01_str)
         svgp.append("\" stop-color=\"#")
-        svgp.append(hex)
+        svgp.append(hex_color_stop)
         svgp.append("\" />")
         if i < len_ks - 1: svgp.append("\r\n")
 
@@ -325,7 +317,7 @@ static func to_svg_string(cg: LabGradient, \
             sb_swatch.append("\" fill-opacity=\"")
             sb_swatch.append(t01_str)
         sb_swatch.append("\" fill=\"#")
-        sb_swatch.append(hex)
+        sb_swatch.append(hex_gamma)
         sb_swatch.append("\" />\r\n")
 
         i = i + 1
@@ -345,8 +337,6 @@ static func to_svg_string(cg: LabGradient, \
     svgp.append(" Z\" fill=\"url('#")
     svgp.append(id)
     svgp.append("')\"")
-    if use_linear_rgb:
-        svgp.append(" filter=\"url('#gammaFilter')\"")
     svgp.append(" />\r\n")
     svgp.append("".join(sb_swatch))
     svgp.append("</svg>")
