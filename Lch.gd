@@ -37,6 +37,10 @@ func _to_string() -> String:
 static func adjust(o: Lch, d: Lch) -> Lch:
     return Lch.new(o.l + d.l, o.c + d.c, o.h + d.h, o.alpha + d.alpha)
 
+## Copies all components of the source color by value to a new color.
+static func copy(source: Lch) -> Lch:
+    return Lch.new(source.l, source.c, source.h, source.alpha)
+
 ## Creates a color with the alpha channel of the right operand. The other
 ## channels adopt the values of the left operand.
 static func copy_alpha(o: Lch, d: Lch) -> Lch:

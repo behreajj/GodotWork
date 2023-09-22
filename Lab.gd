@@ -48,6 +48,10 @@ static func chroma(c: Lab) -> float:
 static func chroma_sq(c: Lab) -> float:
     return c.a * c.a + c.b * c.b
 
+## Copies all components of the source color by value to a new color.
+static func copy(source: Lab) -> Lab:
+    return Lab.new(source.l, source.a, source.b, source.alpha)
+
 ## Creates a color with the alpha channel of the right operand. The other
 ## channels adopt the values of the left operand.
 static func copy_alpha(o: Lab, d: Lab) -> Lab:

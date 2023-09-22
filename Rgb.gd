@@ -30,6 +30,10 @@ func _init(rd: float = 1.0, \
 func _to_string() -> String:
     return Rgb.to_json_string(self)
 
+## Adds the left and right operands, for the purpose of making adjustments.
+static func adjust(o: Rgb, d: Rgb) -> Rgb:
+    return Rgb.new(o.r + d.r, o.g + d.g, o.b + d.b, o.alpha + d.alpha)
+
 ## Finds the color's alpha expressed as a byte in [0, 255].
 static func byte_alpha(c: Rgb) -> int:
     return int(clamp(c.alpha, 0.0, 1.0) * 255 + 0.5)
@@ -53,6 +57,10 @@ static func clamp_01(c: Rgb) -> Rgb:
         clamp(c.g, 0.0, 1.0), \
         clamp(c.b, 0.0, 1.0), \
         clamp(c.alpha, 0.0, 1.0))
+
+## Copies all components of the source color by value to a new color.
+static func copy(source: Rgb) -> Rgb:
+    return Rgb.new(source.r, source.g, source.b, source.alpha)
 
 ## Creates a color with the alpha channel of the right operand. The other
 ## channels adopt the values of the left operand.
@@ -136,8 +144,6 @@ static func grid_cartesian(cols: int = 8, \
     layers: int = 8, \
     opacity: float = 1.0) -> Array:
 
-    # TODO: Test
-
     var t_vrf: float = clamp(opacity, 0.0, 1.0)
     var l_vrf: int = max(1, layers)
     var r_vrf: int = max(1, rows)
@@ -219,10 +225,8 @@ static func opaque(c: Rgb) -> Rgb:
 ## Used when blending colors.
 static func premul(c: Rgb) -> Rgb:
     var t: float = c.alpha
-    if t <= 0.0:
-        return Rgb.clear_black()
-    elif t >= 1.0:
-        return Rgb.opaque(c)
+    if t <= 0.0: return Rgb.clear_black()
+    if t >= 1.0: return Rgb.opaque(c)
     return Rgb.new(c.r * t, c.g * t, c.b * t, t)
 
 ## For colors which exceed the range [0.0, 1.0] in gamma RGB, applies
@@ -301,10 +305,8 @@ static func to_json_string(c: Rgb) -> String:
 ## Used when blending colors.
 static func unpremul(c: Rgb) -> Rgb:
     var t: float = c.alpha
-    if t <= 0.0:
-        return Rgb.clear_black()
-    elif t >= 1.0:
-        return Rgb.opaque(c)
+    if t <= 0.0: return Rgb.clear_black()
+    if t >= 1.0: return Rgb.opaque(c)
     return Rgb.new(c.r / t, c.g / t, c.b / t, t)
 
 ## Creates a preset color for opaque black.

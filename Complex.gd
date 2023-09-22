@@ -37,6 +37,10 @@ static func add(a: Complex, b: Complex) -> Complex:
 static func conj(z: Complex) -> Complex:
     return Complex.new(z.real, -z.imag)
 
+## Copies all components of the source complex number by value to another.
+static func copy(source: Complex) -> Complex:
+    return Complex.new(source.real, source.imag)
+
 ## Finds the cosine of a complex number.
 static func cosine(z: Complex) -> Complex:
     # Cannot be 'cos' due to GDScript variable shadowing.

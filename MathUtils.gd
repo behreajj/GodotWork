@@ -109,3 +109,20 @@ static func mix_angle_near(o: float, \
         return fposmod(u * o_wrapped + t * (d_wrapped + r), r)
     else:
         return u * o_wrapped + t * d_wrapped
+
+## Quantizes a signed number according to a number of levels.
+## The quantization is centered about the range.
+## If the levels are less than 1, returns the input value unchanged.
+static func quantize_signed(v: float, levels: int) -> float:
+    if levels > 0:
+        return floor(0.5 + v * levels) / levels
+    return v
+
+## Quantizes a positive number according to a number of levels.
+## The quantization is based on the left edge.
+## If the levels are less than 2, returns the input value.
+## All returns are clamped to a lower bound of 0.
+static func quantize_unsigned(v: float, levels: int) -> float:
+    if levels > 1:
+        return max(0.0, (ceil(v * levels) - 1.0) / (levels - 1.0))
+    return max(0.0, v)

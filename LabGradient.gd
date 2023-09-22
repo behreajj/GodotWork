@@ -31,6 +31,32 @@ static func _bisect_right(cg: LabGradient, t: float) -> int:
             low = middle + 1
     return low
 
+## Creates a gradient where the source's keys are distributed evenly through
+## the range [0.0, 1.0]. The source gradient's colors are copied by value.
+static func distributed(source: LabGradient) ->LabGradient:
+    var ks_source: Array = source.keys
+    var ks_target: Array = []
+    var len_ks: int = ks_source.size()
+    if len_ks == 1:
+        return LabGradient.new([Lab.copy(ks_source[0])])
+
+    var i_to_step = 1.0 / (len_ks - 1.0)
+
+    var i: int = 0
+    while i < len_ks:
+        var k_source: LabKey = ks_source[i]
+        var color_source: Lab = k_source.color
+
+        var step_target: float = i * i_to_step
+        var color_target: Lab = Lab.copy(color_source)
+        var k_target: LabKey = LabKey.new(step_target, color_target)
+
+        ks_target.append(k_target)
+
+        i = i + 1
+
+    return LabGradient.new(ks_target)
+
 ## Evaluates a sample from the gradient according to a step in [0.0, 1.0]. The
 ## manner which the gradient is sampled is determined by an enum.
 static func eval(cg: LabGradient, \
@@ -63,7 +89,7 @@ static func eval(cg: LabGradient, \
     var diff: float = next_step - prev_step
     var denom: float = 0.0
     if diff != 0.0: denom = 1.0 / diff
-    var t_mapped = (t_clamped - prev_step) * denom
+    var t_mapped: float = (t_clamped - prev_step) * denom
 
     var prev_color: Lab = prev_key.color
     var next_color: Lab = next_key.color
@@ -94,7 +120,7 @@ static func eval_range(cg: LabGradient, \
     var start_verif: float = max(0.0, start)
     var stop_verif: float = min(1.0, stop)
     var i_to_fac: float = 1.0 / (count_verif - 1.0)
-    var samples = []
+    var samples: Array = []
 
     var i: int = 0
     while i < count_verif:
@@ -126,7 +152,7 @@ static func extent(cg: LabGradient) -> float:
 
 ## Creates a gradient from an array of LAB colors. If the array's length is
 ## 0, then returns a black and white gradient. If the array's length is 1,
-## then places the color between black and white.
+## then places the color between black and white. Copies colors by value.
 static func from_colors_lab(cs: Array) -> LabGradient:
     var len_colors: int = cs.size()
     if len_colors <= 0:
@@ -136,23 +162,73 @@ static func from_colors_lab(cs: Array) -> LabGradient:
     if len_colors <= 1:
         return LabGradient.new([
             LabKey.new(0.0, Lab.black()),
-            LabKey.new(0.5, cs[0]),
+            LabKey.new(0.5, Lab.copy(cs[0])),
             LabKey.new(1.0, Lab.white())])
 
     var ks: Array = []
     var i: int = 0
-    var i_to_fac = 1.0 / (len_colors - 1)
+    var i_to_fac: float = 1.0 / (len_colors - 1)
     while i < len_colors:
         var step: float = i * i_to_fac
-        var color: Lab = cs[i]
+        var color: Lab = Lab.copy(cs[i])
         var k: LabKey = LabKey.new(step, color)
         ks.append(k)
         i = i + 1
 
     return LabGradient.new(ks)
 
+## Creates a gradient from the standard RGB primaries and secondiares: red,
+## yellow, green, cyan, blue and magenta. Red is included twice, at the first
+## and last key.
+static func palette_rgb() -> LabGradient:
+    return LabGradient.new([
+        LabKey.new(0.0, Lab.red()),
+        LabKey.new(0.16666666666667, Lab.yellow()),
+        LabKey.new(0.33333333333333, Lab.green()),
+        LabKey.new(0.5, Lab.cyan()),
+        LabKey.new(0.66666666666667, Lab.blue()),
+        LabKey.new(0.83333333333333, Lab.magenta()),
+        LabKey.new(1.0, Lab.red())
+    ])
+
+## Creates a gradient that simulates a red-yellow-blue wheel where yellow is the
+## brightest color and purple is the darkest. Red is included twice, at the
+## first and last key.
+static func palette_ryb() -> LabGradient:
+    return LabGradient.new([
+        LabKey.new(0.0, Lab.new(
+            39.0502325875047,
+            62.1913263950166,
+            53.8350374095145, 1.0)),
+        LabKey.new(0.16666666666667, Lab.new(
+            66.1750712486991,
+            13.8165954011947,
+            72.5026791646071, 1.0)),
+        LabKey.new(0.33333333333333, Lab.new(
+            97.0986480894659,
+            -33.8687299475305,
+            87.8639689718856, 1.0)),
+        LabKey.new(0.5, Lab.new(
+            66.0894625726177,
+            -45.3366282555715,
+            54.4551582873687, 1.0)),
+        LabKey.new(0.66666666666667, Lab.new(
+            37.0555560083937,
+            -7.58274627896071,
+            -92.7766323892714, 1.0)),
+        LabKey.new(0.83333333333333, Lab.new(
+            17.9616504201505,
+            38.3366437364077,
+            -42.0277981982295,
+            1.0)),
+        LabKey.new(1.0, Lab.new(
+            39.0502325875047,
+            62.1913263950166,
+            53.8350374095145, 1.0))
+    ])
+
 ## Creates a gradient where the keys are in reverse order. The source gradient's
-## colors are copied to the reversed by value.
+## colors are copied by value.
 static func reversed(source: LabGradient) -> LabGradient:
     var ks_source: Array = source.keys
     var ks_target: Array = []
@@ -167,11 +243,7 @@ static func reversed(source: LabGradient) -> LabGradient:
         var color_source: Lab = k_source.color
 
         var step_target: float = 1.0 - step_source
-        var color_target: Lab = Lab.new(
-            color_source.l,
-            color_source.a,
-            color_source.b,
-            color_source.alpha)
+        var color_target: Lab = Lab.copy(color_source)
         var k_target: LabKey = LabKey.new(step_target, color_target)
 
         ks_target.append(k_target)
@@ -180,21 +252,21 @@ static func reversed(source: LabGradient) -> LabGradient:
 
 ## Renders a gradient as a string in JSON format.
 static func to_json_string(cg: LabGradient) -> String:
-    # TODO: Is there a better way to concatenate an array to strings?
-    # Use PackedStringArray plus String.join instead?
     var ks: Array = cg.keys
     var len_ks: int = ks.size()
-    var cg_str: String = "{\"keys\":["
+    var sb: PackedStringArray = PackedStringArray()
+    sb.append("{\"keys\":[")
 
     var i: int = 0
     while i < len_ks:
         var k: LabKey = ks[i]
         var k_str: String = LabKey.to_json_string(k)
-        cg_str = cg_str + k_str
-        if i < len_ks - 1: cg_str = cg_str + ","
+        sb.append(k_str)
+        if i < len_ks - 1: sb.append(",")
         i = i + 1
-    cg_str = cg_str + "]}"
-    return cg_str
+
+    sb.append("]}")
+    return "".join(sb)
 
 ## Renders a gradient as a string in SVG format. SVG gradients use gamma sRGB
 ## interpolation by default, so the LAB gradient is sampled by a count. With
@@ -234,7 +306,8 @@ static func to_svg_string(cg: LabGradient, \
     svgp.append("xmlns:xlink=\"http://www.w3.org/1999/xlink\" ")
     svgp.append("width=\"%d\" height=\"%d\" " % [ w_vrf, h_vrf ])
     svgp.append("viewBox=\"0 0 %d %d\" " % [ w_vrf, h_vrf ])
-    svgp.append("preserveAspectRatio=\"xMidYMid slice\">\r\n")
+    svgp.append("preserveAspectRatio=\"xMidYMid slice\" ")
+    svgp.append("stroke=\"none\">\r\n")
 
     svgp.append("<defs>\r\n")
     svgp.append("<linearGradient id=\"%s\" " % id)
@@ -269,14 +342,14 @@ static func to_svg_string(cg: LabGradient, \
 
         var fac0: float = i * i_to_fac
         var fac1: float = (i + 1) * i_to_fac
-        var xl: float = ( 1.0 - fac0 ) * sw_left + fac0 * sw_right
-        var xr: float = ( 1.0 - fac1 ) * sw_left + fac1 * sw_right
+        var x_left: float = ( 1.0 - fac0 ) * sw_left + fac0 * sw_right
+        var x_right: float = ( 1.0 - fac1 ) * sw_left + fac1 * sw_right
 
-        var xl_str: String = "%.6f" % xl
-        var xr_str: String = "%.6f" % xr
+        var xl_str: String = "%.6f" % x_left
+        var xr_str: String = "%.6f" % x_right
 
         sb_swatch.append("<path id=\"swatch%03d\" " % i)
-        sb_swatch.append("d=\"M %s %s L %s %s L %s %s L %s %s Z\" " %
+        sb_swatch.append("d=\"M %s %s L %s %s L %s %s L %s %s Z" %
             [
                 xl_str, h_mid_str,
                 xr_str, h_mid_str,
@@ -284,7 +357,6 @@ static func to_svg_string(cg: LabGradient, \
                 xl_str, h_str
             ])
 
-        sb_swatch.append("stroke=\"none")
         if include_opacity:
             sb_swatch.append("\" fill-opacity=\"")
             sb_swatch.append(t01_str)
@@ -314,53 +386,3 @@ static func to_svg_string(cg: LabGradient, \
     svgp.append("</svg>")
 
     return "".join(svgp)
-
-## Creates a gradient from the standard RGB primaries and secondiares: red,
-## yellow, green, cyan, blue and magenta. Red is included twice, at the first
-## and last key.
-static func rgb() -> LabGradient:
-    return LabGradient.new([
-        LabKey.new(0.0, Lab.red()),
-        LabKey.new(0.16666666666667, Lab.yellow()),
-        LabKey.new(0.33333333333333, Lab.green()),
-        LabKey.new(0.5, Lab.cyan()),
-        LabKey.new(0.66666666666667, Lab.blue()),
-        LabKey.new(0.83333333333333, Lab.magenta()),
-        LabKey.new(1.0, Lab.red())
-    ])
-
-## Creates a gradient that simulates a red-yellow-blue wheel where yellow is the
-## brightest color and purple is the darkest. Red is included twice, at the
-## first and last key.
-static func ryb() -> LabGradient:
-    return LabGradient.new([
-        LabKey.new(0.0, Lab.new(
-            39.0502325875047,
-            62.1913263950166,
-            53.8350374095145, 1.0)),
-        LabKey.new(0.16666666666667, Lab.new(
-            66.1750712486991,
-            13.8165954011947,
-            72.5026791646071, 1.0)),
-        LabKey.new(0.33333333333333, Lab.new(
-            97.0986480894659,
-            -33.8687299475305,
-            87.8639689718856, 1.0)),
-        LabKey.new(0.5, Lab.new(
-            66.0894625726177,
-            -45.3366282555715,
-            54.4551582873687, 1.0)),
-        LabKey.new(0.66666666666667, Lab.new(
-            37.0555560083937,
-            -7.58274627896071,
-            -92.7766323892714, 1.0)),
-        LabKey.new(0.83333333333333, Lab.new(
-            17.9616504201505,
-            38.3366437364077,
-            -42.0277981982295,
-            1.0)),
-        LabKey.new(1.0, Lab.new(
-            39.0502325875047,
-            62.1913263950166,
-            53.8350374095145, 1.0))
-    ])

@@ -14,6 +14,9 @@ static func color_to_gamma_rgb(c: Color) -> Rgb:
 ## sampling the gradient a given number of times.
 static func gradient_to_lab_gradient(g: Gradient, \
     samples: int = 16) -> LabGradient:
+
+    # TODO: Test
+
     var verif_samples: int = clamp(abs(samples), 2, 96)
     var i_to_fac: float = 1.0 / (verif_samples - 1)
     var ks: Array = []

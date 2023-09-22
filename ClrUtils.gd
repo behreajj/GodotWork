@@ -162,6 +162,19 @@ static func mix_linear_rgb(o: Rgb, d: Rgb, t: float = 0.5) -> Rgb:
         u * o.b + t * d.b,
         u * o.alpha + t * d.alpha)
 
+## Quantizes a color in gamma sRGB. Assumes colors are in gamut. Uses unsigned
+## quantization.
+static func quantize_gamma_rgb(c: Rgb, \
+    r_levels: int = 0, \
+    g_levels: int = 0, \
+    b_levels: int = 0, \
+    a_levels: int = 0) -> Rgb:
+    return Rgb.new(
+        MathUtils.quantize_unsigned(c.r, r_levels),
+        MathUtils.quantize_unsigned(c.g, g_levels),
+        MathUtils.quantize_unsigned(c.b, b_levels),
+        MathUtils.quantize_unsigned(c.alpha, a_levels))
+
 ## Converts a color from SR LAB 2 to gamma sRGB.
 static func sr_lab_2_to_gamma_rgb(c: Lab) -> Rgb:
     return Rgb.linear_to_gamma(ClrUtils.sr_lab_2_to_linear_rgb(c))
