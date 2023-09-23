@@ -106,11 +106,11 @@ static func difference(o: Lab, d: Lab) -> Lab:
 
 
 ## Finds the Euclidean distance between two colors.
-static func dist_euclidean(o: Lab, d: Lab) -> float:
+static func dist_euclidean(o: Lab, d: Lab, alpha_scalar: float = 1.0) -> float:
     var vl: float = d.l - o.l
     var va: float = d.a - o.a
     var vb: float = d.b - o.b
-    var vt: float = d.alpha - o.alpha
+    var vt: float = d.alpha * alpha_scalar - o.alpha * alpha_scalar
     return sqrt(vl * vl + va * va + vb * vb + vt * vt)
 
 
@@ -127,9 +127,15 @@ static func grid_cartesian(cols: int = 8, \
     rows: int = 8, \
     layers: int = 8, \
     opacity: float = 1.0, \
-    ab_bounds: float = 111.0) -> Array:
+    ab_bounds: float = 111.0, \
+    min_light: float = 0.0, \
+    max_light: float = 100.0) -> Array:
+
+    var mxl_vrf: float = max(min_light, max_light)
+    var mnl_vrf: float = min(min_light, max_light)
 
     var ab_bds_vrf: float = abs(ab_bounds)
+
     var t_vrf: float = clamp(opacity, 0.0, 1.0)
     var l_vrf: int = max(1, layers)
     var r_vrf: int = max(1, rows)
@@ -176,7 +182,7 @@ static func grid_cartesian(cols: int = 8, \
         var h_fac: float = h * h_to_step + h_off
 
         result.append(Lab.new(
-            h_fac * 100.0,
+            (1.0 - h_fac) * mnl_vrf + h_fac * mxl_vrf,
             (1.0 - j_fac) * -ab_bds_vrf + j_fac * ab_bds_vrf,
             (1.0 - i_fac) * -ab_bds_vrf + i_fac * ab_bds_vrf,
             t_vrf))

@@ -65,6 +65,73 @@ static func gray(lch: Lch) -> Lch:
     return Lch.new(lch.l, 0.0, lch.h, lch.alpha)
 
 
+## Creates a cylindrical grid of colors in LCH, then returns them as a 1D array.
+## Hue is associated with the cylinder's sectors, or circumference.
+## Chroma is associated with the cylinder's rings, or radius.
+## Lightness is associated with layers, or the z axis.
+static func grid_cylinder(
+    sectors: int = 16, \
+    rings: int = 8, \
+    layers: int = 8, \
+    opacity: float = 1.0, \
+    min_chroma: float = 15.0, \
+    max_chroma: float = 120.0, \
+    min_light: float = 0.0, \
+    max_light: float = 100.0) -> Array:
+
+    var mxl_vrf: float = max(min_light, max_light)
+    var mnl_vrf: float = min(min_light, max_light)
+
+    var mxc_vrf: float = max(min_chroma, max_chroma)
+    var mnc_vrf: float = min(min_chroma, max_chroma)
+
+    var t_vrf: float = clamp(opacity, 0.0, 1.0)
+    var l_vrf: int = max(1, layers)
+    var r_vrf: int = max(1, rings)
+    var s_vrf: int = max(2, sectors)
+
+    var one_layer: bool = l_vrf == 1
+    var x_to_step: float = 0.0
+    var x_off: float = 0.5
+    if not one_layer:
+        x_off = 0.0
+        x_to_step = 1.0 / (l_vrf - 1.0)
+
+    var one_row: bool = r_vrf == 1
+    var i_to_step: float = 0.0
+    var i_off: float = 0.5
+    if not one_row:
+        i_off = 0.0
+        i_to_step = 1.0 / (r_vrf - 1.0)
+
+    var j_to_hue: float = 1.0 / s_vrf
+
+    var result: Array = []
+    var rs_vrf: int = s_vrf * s_vrf
+    var len3: int = l_vrf * rs_vrf
+    var k: int = 0
+    while k < len3:
+        @warning_ignore("integer_division")
+        var x: int = k / rs_vrf
+        var m: int = k - x * rs_vrf
+        @warning_ignore("integer_division")
+        var i: int = m / s_vrf
+        var j: int = m % s_vrf
+
+        var j_hue: float = j * j_to_hue
+        var i_fac: float = i * i_to_step + i_off
+        var x_fac: float = x * x_to_step + x_off
+
+        result.append(Lch.new(
+            (1.0 - x_fac) * mnl_vrf + x_fac * mxl_vrf,
+            (1.0 - i_fac) * mnc_vrf + i_fac * mxc_vrf,
+            j_hue,
+            t_vrf))
+        k = k + 1
+
+    return result
+
+
 ## Creates an array of 2 LAB colors at analogous hues from the source.
 ## The hues are positive and negative 30 degrees away.
 static func harmony_analogous(lch: Lch) -> Array:
@@ -149,6 +216,16 @@ static func harmony_triadic(lch: Lch) -> Array:
         Lch.new(l_tri, lch.c, h120 - floor(h120), lch.alpha),
         Lch.new(l_tri, lch.c, h240 - floor(h240), lch.alpha)
     ]
+
+
+## Finds the color's hue in degrees, [0, 360).
+static func hue_degrees(lch: Lch) -> float:
+    return (lch.h - floor(lch.h)) * 360.0
+
+
+## Finds the color's hue in degrees, [0, TAU).
+static func hue_radians(lch: Lch) -> float:
+    return (lch.h - floor(lch.h)) * TAU
 
 
 ## Finds an opaque version of the color, where the alpha is 1.0.
