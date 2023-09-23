@@ -2,14 +2,17 @@
 ## mix colors.
 class_name ClrUtils
 
+
 ## Converts a color from gamma sRGB to SR LAB 2.
 static func gamma_rgb_to_sr_lab_2(c: Rgb) -> Lab:
     return ClrUtils.linear_rgb_to_sr_lab_2(Rgb.gamma_to_linear(c))
+
 
 ## Converts a color from gamma sRGB to SR LCH.
 static func gamma_rgb_to_sr_lch(c: Rgb) -> Lch:
     return ClrUtils.lab_to_lch(ClrUtils.linear_rgb_to_sr_lab_2(
         Rgb.gamma_to_linear(c)))
+
 
 ## Converts a color from LAB to LCH.
 static func lab_to_lch(c: Lab) -> Lch:
@@ -18,11 +21,13 @@ static func lab_to_lch(c: Lab) -> Lch:
         return Lch.new(c.l, sqrt(c_sq), Lab.hue(c), c.alpha)
     return Lch.new(c.l, 0.0, 0.0, c.alpha)
 
+
 ## Converts a color from LCH to LAB.
 static func lch_to_lab(c: Lch) -> Lab:
     var cr: float = max(0.0, abs(c.c))
     var hr: float = c.h * TAU
     return Lab.new(c.l, cr * cos(hr), cr * sin(hr), c.alpha)
+
 
 ## Converts a color from linear sRGB to SR LAB 2. See Jan Behrens,
 ## https://www.magnetkern.de/srlab2.html .
@@ -68,14 +73,17 @@ static func linear_rgb_to_sr_lab_2(c: Rgb) -> Lab:
 
     return Lab.new(l, a, b, c.alpha)
 
+
 ## Converts a color from linear sRGB to gamma SR LCH.
 static func linear_rgb_to_sr_lch(c: Rgb) -> Lch:
     return ClrUtils.lab_to_lch(ClrUtils.linear_rgb_to_sr_lab_2(c))
+
 
 ## Mixes two colors in gamma sRGB by a factor in [0.0, 1.0].
 static func mix_gamma_rgb(o: Rgb, d: Rgb, t: float = 0.5) -> Rgb:
     return Rgb.linear_to_gamma(ClrUtils.mix_linear_rgb(
         Rgb.gamma_to_linear(o), Rgb.gamma_to_linear(d), t))
+
 
 ## Mixes two colors in LAB by a factor in [0.0, 1.0].
 static func mix_lab(o: Lab, d: Lab, t: float = 0.5) -> Lab:
@@ -85,6 +93,7 @@ static func mix_lab(o: Lab, d: Lab, t: float = 0.5) -> Lab:
         u * o.a + t * d.a,
         u * o.b + t * d.b,
         u * o.alpha + t * d.alpha)
+
 
 ## Mixes two colors in LAB by a factor in [0.0, 1.0]. A convenience so as to
 ## avoid converting to and mixing in LCH.
@@ -107,6 +116,7 @@ static func mix_lab_polar(o: Lab, \
         cc * cos(ch),
         cc * sin(ch),
         u * o.alpha + t * d.alpha)
+
 
 ## Mixes two colors in LCH by a factor in [0.0, 1.0].
 static func mix_lch(o: Lch, \
@@ -153,6 +163,7 @@ static func mix_lch(o: Lch, \
     var cc: float = u * oc + t * dc
     return Lch.new(cl, cc, ch, c_alpha)
 
+
 ## Mixes two colors in linear sRGB by a factor in [0.0, 1.0].
 static func mix_linear_rgb(o: Rgb, d: Rgb, t: float = 0.5) -> Rgb:
     var u: float = 1.0 - t
@@ -161,6 +172,7 @@ static func mix_linear_rgb(o: Rgb, d: Rgb, t: float = 0.5) -> Rgb:
         u * o.g + t * d.g,
         u * o.b + t * d.b,
         u * o.alpha + t * d.alpha)
+
 
 ## Quantizes a color in gamma sRGB. Assumes colors are in gamut. Uses unsigned
 ## quantization.
@@ -175,9 +187,11 @@ static func quantize_gamma_rgb(c: Rgb, \
         MathUtils.quantize_unsigned(c.b, b_levels),
         MathUtils.quantize_unsigned(c.alpha, a_levels))
 
+
 ## Converts a color from SR LAB 2 to gamma sRGB.
 static func sr_lab_2_to_gamma_rgb(c: Lab) -> Rgb:
     return Rgb.linear_to_gamma(ClrUtils.sr_lab_2_to_linear_rgb(c))
+
 
 ## Converts a color from SR LAB 2 to linear sRGB. See Jan Behrens,
 ## https://www.magnetkern.de/srlab2.html .
@@ -222,10 +236,12 @@ static func sr_lab_2_to_linear_rgb(c: Lab) -> Rgb:
 
     return Rgb.new(rl, gl, bl, c.alpha)
 
+
 ## Converts a color from SR LCH to gamma sRGB.
 static func sr_lch_to_gamma_rgb(c: Lch) -> Rgb:
     return Rgb.linear_to_gamma(ClrUtils.sr_lab_2_to_linear_rgb(
         ClrUtils.lch_to_lab(c)))
+
 
 ## Converts a color from SR LCH to linear sRGB.
 static func sr_lch_to_linear_rgb(c: Lch) -> Rgb:

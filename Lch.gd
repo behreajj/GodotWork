@@ -5,6 +5,7 @@
 ## Alpha is expected to be in [0.0, 1.0].
 class_name Lch
 
+
 ## The alpha, or opacity, component, in the range [0.0, 1.0].
 var alpha: float
 
@@ -18,6 +19,7 @@ var h: float
 ## The light component, in the range [0.0, 100.0].
 var l: float
 
+
 ## Creates an LCH color from real numbers.
 func _init(lightness: float = 100.0, \
     chroma: float = 0.0, \
@@ -29,32 +31,39 @@ func _init(lightness: float = 100.0, \
     self.h = hue
     self.alpha = opacity
 
+
 ## Renders the color as a string in JSON format.
 func _to_string() -> String:
     return Lch.to_json_string(self)
+
 
 ## Adds the left and right operands, for the purpose of making adjustments.
 static func adjust(o: Lch, d: Lch) -> Lch:
     return Lch.new(o.l + d.l, o.c + d.c, o.h + d.h, o.alpha + d.alpha)
 
+
 ## Copies all components of the source color by value to a new color.
 static func copy(source: Lch) -> Lch:
     return Lch.new(source.l, source.c, source.h, source.alpha)
+
 
 ## Creates a color with the alpha channel of the right operand. The other
 ## channels adopt the values of the left operand.
 static func copy_alpha(o: Lch, d: Lch) -> Lch:
     return Lch.new(o.l, o.c, o.h, d.alpha)
 
+
 ## Creates a color with the alpha channel of the right operand. The other
 ## channels adopt the values of the left operand.
 static func copy_light(o: Lch, d: Lch) -> Lch:
     return Lch.new(d.l, o.c, o.h, o.alpha)
 
+
 ## Finds a grayscale version of the color, where chroma is zero.
 ## Retains the source's hue, even though it'd be undefined in grayscale.
 static func gray(lch: Lch) -> Lch:
     return Lch.new(lch.l, 0.0, lch.h, lch.alpha)
+
 
 ## Creates an array of 2 LAB colors at analogous hues from the source.
 ## The hues are positive and negative 30 degrees away.
@@ -69,6 +78,7 @@ static func harmony_analogous(lch: Lch) -> Array:
         Lch.new(l_ana, lch.c, h330 - floor(h330), lch.alpha)
     ]
 
+
 ## Creates an array of 1 LAB color complementary to the source.
 ## The hue is 180 degrees away, or the negation of the source a and b.
 static func harmony_complement(lch: Lch) -> Array:
@@ -77,6 +87,7 @@ static func harmony_complement(lch: Lch) -> Array:
     var h180: float = lch.h + 0.5
 
     return [ new(l_cmp, lch.c, h180 - floor(h180), lch.alpha) ]
+
 
 ## Creates an array of 2 LAB colors at split hues from the source.
 ## The hues are 150 and 210 degrees away.
@@ -90,6 +101,7 @@ static func harmony_split(lch: Lch) -> Array:
         Lch.new(l_spl, lch.c, h150 - floor(h150), lch.alpha),
         Lch.new(l_spl, lch.c, h210 - floor(h210), lch.alpha)
     ]
+
 
 ## Creates an array of 3 LAB colors at square hues from the source.
 ## The hues are 90, 180 and 270 degrees away.
@@ -105,6 +117,7 @@ static func harmony_square(lch: Lch) -> Array:
         Lch.new(l_cmp, lch.c, h180 - floor(h180), lch.alpha),
         Lch.new(50.0, lch.c, h270 - floor(h270), lch.alpha)
     ]
+
 
 ## Creates an array of 3 LAB colors at tetradic hues from the source.
 ## The hues are 120, 180 and 300 degrees away.
@@ -123,6 +136,7 @@ static func harmony_tetradic(lch: Lch) -> Array:
         Lch.new(l_tet, lch.c, h300 - floor(h300), lch.alpha)
     ]
 
+
 ## Creates an array of 2 LAB colors at triadic hues from the source.
 ## The hues are positive and negative 120 degrees away.
 static func harmony_triadic(lch: Lch) -> Array:
@@ -136,18 +150,22 @@ static func harmony_triadic(lch: Lch) -> Array:
         Lch.new(l_tri, lch.c, h240 - floor(h240), lch.alpha)
     ]
 
+
 ## Finds an opaque version of the color, where the alpha is 1.0.
 static func opaque(lch: Lch) -> Lch:
     return Lch.new(lch.l, lch.c, lch.h, 1.0)
+
 
 ## Renders a color as a string in JSON format.
 static func to_json_string(lch: Lch) -> String:
     return "{\"l\":%.4f,\"c\":%.4f,\"h\":%.4f,\"alpha\":%.4f}" \
         % [ lch.l, lch.c, lch.h, lch.alpha ]
 
+
 ## Creates a preset color for opaque black.
 static func black() -> Lch:
     return Lch.new(0.0, 0.0, 0.0, 1.0)
+
 
 ## Creates a preset color for blue in SR LCH.
 static func blue() -> Lch:
@@ -157,13 +175,16 @@ static func blue() -> Lch:
         0.73279449277552,
         1.0)
 
+
 ## Creates a preset color for invisible black.
 static func clear_black() -> Lch:
     return Lch.new(0.0, 0.0, 0.0, 0.0)
 
+
 ## Creates a preset color for invisible white.
 static func clear_white() -> Lch:
     return Lch.new(100.0, 0.0, 0.0, 0.0)
+
 
 ## Creates a preset color for cyan in SR LCH.
 static func cyan() -> Lch:
@@ -173,6 +194,7 @@ static func cyan() -> Lch:
         0.55254010973227,
         1.0)
 
+
 ## Creates a preset color for green in SR LCH.
 static func green() -> Lch:
     return Lch.new(
@@ -180,6 +202,7 @@ static func green() -> Lch:
         117.374612112472,
         0.37492251819407,
         1.0)
+
 
 ## Creates a preset color for magenta in SR LCH.
 static func magenta() -> Lch:
@@ -189,6 +212,7 @@ static func magenta() -> Lch:
         0.91467999408849,
         1.0)
 
+
 ## Creates a preset color for red in SR LCH.
 static func red() -> Lch:
     return Lch.new(
@@ -197,9 +221,11 @@ static func red() -> Lch:
         0.11356219478123,
         1.0)
 
+
 ## Creates a preset color for opaque white.
 static func white() -> Lch:
     return Lch.new(100.0, 0.0, 0.0, 1.0)
+
 
 ## Creates a preset color for yellow in SR LCH.
 static func yellow() -> Lch:

@@ -1,20 +1,25 @@
 ## A gradient for mixing colors in LAB color space.
 class_name LabGradient
 
-## An array of LAB keys.
-var keys: Array
 
 ## Gradient evaluation presets.
 enum Easing { LAB, LCH_CCW, LCH_CW, LCH_FAR, LCH_NEAR }
+
+
+## An array of LAB keys.
+var keys: Array
+
 
 ## Creates a new gradient from an array of keys. The array is assigned by
 ## reference.
 func _init(lab_keys: Array):
     self.keys = lab_keys
 
+
 ## Renders the gradient as a string in JSON format.
 func _to_string() -> String:
     return LabGradient.to_json_string(self)
+
 
 ## Internal helper function to find the index of the appropriate gradient key
 ## based on a step given to the evaluate method.
@@ -31,14 +36,39 @@ static func _bisect_right(cg: LabGradient, t: float) -> int:
             low = middle + 1
     return low
 
-## Creates a gradient where the source's keys are distributed evenly through
-## the range [0.0, 1.0]. The source gradient's colors are copied by value.
-static func distributed(source: LabGradient) ->LabGradient:
+
+## Copies all components of the source gradient by value to a new gradient.
+static func copy(source: LabGradient) -> LabGradient:
     var ks_source: Array = source.keys
     var ks_target: Array = []
     var len_ks: int = ks_source.size()
+
+    var i: int = 0
+    while i < len_ks:
+        ks_target.append(LabKey.copy(ks_source[i]))
+        i = i + 1
+
+    return LabGradient.new(ks_target)
+
+
+## Creates a gradient where the source's keys are distributed evenly through
+## the range [0.0, 1.0]. The source gradient's colors are copied by value.
+static func distributed(source: LabGradient) -> LabGradient:
+    var ks_source: Array = source.keys
+    var ks_target: Array = []
+    var len_ks: int = ks_source.size()
+
+    if len_ks == 0:
+        return LabGradient.new([
+            LabKey.new(0.0, Lab.black()),
+            LabKey.new(1.0, Lab.white())
+            ])
     if len_ks == 1:
-        return LabGradient.new([Lab.copy(ks_source[0])])
+        return LabGradient.new([
+            LabKey.new(0.0, Lab.black()),
+            LabKey.new(0.5, Lab.copy(ks_source[0].color)),
+            LabKey.new(1.0, Lab.white())
+            ])
 
     var i_to_step = 1.0 / (len_ks - 1.0)
 
@@ -56,6 +86,7 @@ static func distributed(source: LabGradient) ->LabGradient:
         i = i + 1
 
     return LabGradient.new(ks_target)
+
 
 ## Evaluates a sample from the gradient according to a step in [0.0, 1.0]. The
 ## manner which the gradient is sampled is determined by an enum.
@@ -108,6 +139,7 @@ static func eval(cg: LabGradient, \
     else:
         return ClrUtils.mix_lab(prev_color, next_color, t_mapped)
 
+
 ## Evaluates a range of samples given a start and stop point. Returns an array
 ## of LAB colors.
 static func eval_range(cg: LabGradient, \
@@ -132,6 +164,7 @@ static func eval_range(cg: LabGradient, \
 
     return samples
 
+
 ## Finds the absolute difference between a gradient's minimum and maximum step.
 static func extent(cg: LabGradient) -> float:
     # Don't assume that the keys array has been sorted by step.
@@ -150,20 +183,24 @@ static func extent(cg: LabGradient) -> float:
 
     return max_step - min_step
 
+
 ## Creates a gradient from an array of LAB colors. If the array's length is
 ## 0, then returns a black and white gradient. If the array's length is 1,
 ## then places the color between black and white. Copies colors by value.
 static func from_colors_lab(cs: Array) -> LabGradient:
     var len_colors: int = cs.size()
-    if len_colors <= 0:
+
+    if len_colors == 0:
         return LabGradient.new([
             LabKey.new(0.0, Lab.black()),
-            LabKey.new(1.0, Lab.white())])
-    if len_colors <= 1:
+            LabKey.new(1.0, Lab.white())
+            ])
+    if len_colors == 1:
         return LabGradient.new([
             LabKey.new(0.0, Lab.black()),
             LabKey.new(0.5, Lab.copy(cs[0])),
-            LabKey.new(1.0, Lab.white())])
+            LabKey.new(1.0, Lab.white())
+            ])
 
     var ks: Array = []
     var i: int = 0
@@ -176,6 +213,7 @@ static func from_colors_lab(cs: Array) -> LabGradient:
         i = i + 1
 
     return LabGradient.new(ks)
+
 
 ## Creates a gradient from the standard RGB primaries and secondiares: red,
 ## yellow, green, cyan, blue and magenta. Red is included twice, at the first
@@ -190,6 +228,7 @@ static func palette_rgb() -> LabGradient:
         LabKey.new(0.83333333333333, Lab.magenta()),
         LabKey.new(1.0, Lab.red())
     ])
+
 
 ## Creates a gradient that simulates a red-yellow-blue wheel where yellow is the
 ## brightest color and purple is the darkest. Red is included twice, at the
@@ -227,6 +266,7 @@ static func palette_ryb() -> LabGradient:
             53.8350374095145, 1.0))
     ])
 
+
 ## Creates a gradient where the keys are in reverse order. The source gradient's
 ## colors are copied by value.
 static func reversed(source: LabGradient) -> LabGradient:
@@ -250,6 +290,7 @@ static func reversed(source: LabGradient) -> LabGradient:
 
     return LabGradient.new(ks_target)
 
+
 ## Renders a gradient as a string in JSON format.
 static func to_json_string(cg: LabGradient) -> String:
     var ks: Array = cg.keys
@@ -267,6 +308,7 @@ static func to_json_string(cg: LabGradient) -> String:
 
     sb.append("]}")
     return "".join(sb)
+
 
 ## Renders a gradient as a string in SVG format. SVG gradients use gamma sRGB
 ## interpolation by default, so the LAB gradient is sampled by a count. With
@@ -349,12 +391,11 @@ static func to_svg_string(cg: LabGradient, \
         var xr_str: String = "%.6f" % x_right
 
         sb_swatch.append("<path id=\"swatch%03d\" " % i)
-        sb_swatch.append("d=\"M %s %s L %s %s L %s %s L %s %s Z" %
-            [
-                xl_str, h_mid_str,
-                xr_str, h_mid_str,
-                xr_str, h_str,
-                xl_str, h_str
+        sb_swatch.append("d=\"M %s %s L %s %s L %s %s L %s %s Z" % [
+            xl_str, h_mid_str,
+            xr_str, h_mid_str,
+            xr_str, h_str,
+            xl_str, h_str
             ])
 
         if include_opacity:

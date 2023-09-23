@@ -2,13 +2,16 @@
 ## native objects.
 class_name Bridge
 
+
 ## Converts an RGB color to a GDScript Color.
 static func gamma_rgb_to_color(c: Rgb) -> Color:
     return Color(c.r, c.g, c.b, c.alpha)
 
+
 ## Converts a GDScript Color to an RGB color.
 static func color_to_gamma_rgb(c: Color) -> Rgb:
     return Rgb.new(c.r, c.g, c.b, c.a)
+
 
 ## Converts a GDScript Gradient to a LAB Gradient. Does so indirectly by
 ## sampling the gradient a given number of times.
@@ -33,20 +36,24 @@ static func gradient_to_lab_gradient(g: Gradient, \
 
     return LabGradient.new(ks)
 
+
 ## Converts a LAB color to a GDScript Vector3. The color's lightness is
 ## assigned to the z axis. The alpha is omitted.
 static func lab_to_vector3(c: Lab) -> Vector3:
     return Vector3(c.a, c.b, c.l)
+
 
 ## Converts a LAB color to a GDScript Vector3. The color's lightness is
 ## assigned to the z axis. The w axis is assigned to alpha.
 static func lab_to_vector4(c: Lab) -> Vector4:
     return Vector4(c.a, c.b, c.l, c.alpha)
 
+
 ## Converts a GDScript Vector3 to a LAB color. The z axis is assigned to the
 ## color's lightness.
 static func vector3_to_lab(v: Vector3, opacity: float = 1.0) -> Lab:
     return Lab.new(v.z, v.x, v.y, opacity)
+
 
 ## Converts a GDScript Vector4 to a LAB color. The z axis is assigned to the
 ## color's lightness. The w axis is assigned to alpha.

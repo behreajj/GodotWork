@@ -6,6 +6,7 @@
 ## Alpha is expected to be in [0.0, 1.0].
 class_name Lab
 
+
 ## The alpha, or opacity, component, in the range [0.0, 1.0].
 var alpha: float
 
@@ -20,6 +21,7 @@ var b: float
 ## The light component, in the range [0.0, 100.0].
 var l: float
 
+
 ## Creates a LAB color from real numbers.
 func _init(lightness: float = 100.0, \
     green_magenta: float = 0.0, \
@@ -31,40 +33,91 @@ func _init(lightness: float = 100.0, \
     self.b = blue_yellow
     self.alpha = opacity
 
+
 ## Renders the color as a string in JSON format.
 func _to_string() -> String:
     return Lab.to_json_string(self)
 
+
 ## Adds the left and right operands, for the purpose of making adjustments.
 static func adjust(o: Lab, d: Lab) -> Lab:
     return Lab.new(o.l + d.l, o.a + d.a, o.b + d.b, o.alpha + d.alpha)
+
+
+## Evaluates a Bezier curve in color space according to a factor [0.0, 1.0],
+## returning a point on the curve.
+static func bezier_point(ap0: Lab, \
+    cp0: Lab, \
+    cp1: Lab, \
+    ap1: Lab, \
+    t: float) -> Lab:
+    return Lab.new(
+        bezier_interpolate(ap0.l, cp0.l, cp1.l, ap1.l, t),
+        bezier_interpolate(ap0.a, cp0.a, cp1.a, ap1.a, t),
+        bezier_interpolate(ap0.b, cp0.b, cp1.b, ap1.b, t),
+        bezier_interpolate(ap0.alpha, cp0.alpha, cp1.alpha, ap1.alpha, t))
+
+
+## Evaluates a Bezier curve in color space according to a factor [0.0, 1.0],
+## returning a tangent, or derivative, from the curve.
+static func bezier_tangent(ap0: Lab, \
+    cp0: Lab, \
+    cp1: Lab, \
+    ap1: Lab, \
+    t: float) -> Lab:
+    return Lab.new(
+        bezier_derivative(ap0.l, cp0.l, cp1.l, ap1.l, t),
+        bezier_derivative(ap0.a, cp0.a, cp1.a, ap1.a, t),
+        bezier_derivative(ap0.b, cp0.b, cp1.b, ap1.b, t),
+        bezier_derivative(ap0.alpha, cp0.alpha, cp1.alpha, ap1.alpha, t))
+
 
 ## Finds a color's chroma. Finds the Euclidean distance of a and b from the
 ## origin.
 static func chroma(c: Lab) -> float:
     return sqrt(Lab.chroma_sq(c))
 
+
 ## Finds a color's chroma squared, the sum of its a and b channels squared.
 static func chroma_sq(c: Lab) -> float:
     return c.a * c.a + c.b * c.b
 
+
 ## Copies all components of the source color by value to a new color.
 static func copy(source: Lab) -> Lab:
     return Lab.new(source.l, source.a, source.b, source.alpha)
+
 
 ## Creates a color with the alpha channel of the right operand. The other
 ## channels adopt the values of the left operand.
 static func copy_alpha(o: Lab, d: Lab) -> Lab:
     return Lab.new(o.l, o.a, o.b, d.alpha)
 
+
 ## Creates a color with the alpha channel of the right operand. The other
 ## channels adopt the values of the left operand.
 static func copy_light(o: Lab, d: Lab) -> Lab:
     return Lab.new(d.l, o.a, o.b, o.alpha)
 
+
+## Finds the signed difference between two colors.
+static func difference(o: Lab, d: Lab) -> Lab:
+    return Lab.new(o.l - d.l, o.a - d.a, o.b - d.b, o.alpha - d.alpha)
+
+
+## Finds the Euclidean distance between two colors.
+static func dist_euclidean(o: Lab, d: Lab) -> float:
+    var vl: float = d.l - o.l
+    var va: float = d.a - o.a
+    var vb: float = d.b - o.b
+    var vt: float = d.alpha - o.alpha
+    return sqrt(vl * vl + va * va + vb * vb + vt * vt)
+
+
 ## Finds a grayscale version of the color, where a and b are zero.
 static func gray(c: Lab) -> Lab:
     return Lab.new(c.l, 0.0, 0.0, c.alpha)
+
 
 ## Creates a 3D grid of colors in LAB, then returns them as a 1D array.
 ## Green to magenta is associated with columns, or the x axis.
@@ -131,6 +184,7 @@ static func grid_cartesian(cols: int = 8, \
 
     return result
 
+
 ## Creates an array of 2 LAB colors at analogous hues from the source.
 ## The hues are positive and negative 30 degrees away.
 static func harmony_analogous(c: Lab) -> Array:
@@ -151,10 +205,12 @@ static func harmony_analogous(c: Lab) -> Array:
         Lab.new(l_ana, a330, b330, c.alpha)
     ]
 
+
 ## Creates an array of 1 LAB color complementary to the source.
 ## The hue is 180 degrees away, or the negation of the source a and b.
 static func harmony_complement(c: Lab) -> Array:
     return [ Lab.new(100.0 - c.l, -c.a, -c.b, c.alpha) ]
+
 
 ## Creates an array of 2 LAB colors at split hues from the source.
 ## The hues are 150 and 210 degrees away.
@@ -176,6 +232,7 @@ static func harmony_split(c: Lab) -> Array:
         Lab.new(l_spl, a210, b210, c.alpha)
     ]
 
+
 ## Creates an array of 3 LAB colors at square hues from the source.
 ## The hues are 90, 180 and 270 degrees away.
 static func harmony_square(c: Lab) -> Array:
@@ -184,6 +241,7 @@ static func harmony_square(c: Lab) -> Array:
         Lab.new(100.0 - c.l, -c.a, -c.b, c.alpha),
         Lab.new(50.0, c.b, -c.a, c.alpha)
     ]
+
 
 ## Creates an array of 3 LAB colors at tetradic hues from the source.
 ## The hues are 120, 180 and 300 degrees away.
@@ -208,6 +266,7 @@ static func harmony_tetradic(c: Lab) -> Array:
         Lab.new(l_tet, a300, b300, c.alpha)
     ]
 
+
 ## Creates an array of 2 LAB colors at triadic hues from the source.
 ## The hues are positive and negative 120 degrees away.
 static func harmony_triadic(c: Lab) -> Array:
@@ -228,6 +287,7 @@ static func harmony_triadic(c: Lab) -> Array:
         Lab.new(l_tri, a240, b240, c.alpha)
     ]
 
+
 ## Finds the source color's hue, the wrapped and normalized arctangent of a
 ## and b.
 static func hue(c: Lab) -> float:
@@ -237,9 +297,11 @@ static func hue(c: Lab) -> float:
         hue_unsigned = hue_signed + TAU
     return hue_unsigned / TAU
 
+
 ## Finds an opaque version of the color, where the alpha is 1.0.
 static func opaque(c: Lab) -> Lab:
     return Lab.new(c.l, c.a, c.b, 1.0)
+
 
 ## Returns a color with the source's components, but a and b scaled to the
 ## arguments provided.
@@ -250,11 +312,13 @@ static func rescale_chroma(c: Lab, scalar: float) -> Lab:
         return Lab.new(c.l, c.a * sc_inv, c.b * sc_inv, c.alpha)
     return Lab.gray(c)
 
+
 ## Returns a color with the source's components, but a and b rotated by
 ## the argument specified.
 static func rotate_hue(c: Lab, hue_shift: float) -> Lab:
     var radians: float = hue_shift * TAU
     return Lab._rotate_hue_internal(c, cos(radians), sin(radians))
+
 
 ## Returns a color with the source's components, but a and b rotated by
 ## the argument specified. Internal function that accepts precalculated
@@ -266,14 +330,17 @@ static func _rotate_hue_internal(c: Lab, cosa: float, sina: float) -> Lab:
         cosa * c.b + sina * c.a,
         c.alpha)
 
+
 ## Renders a color as a string in JSON format.
 static func to_json_string(c: Lab) -> String:
     return "{\"l\":%.4f,\"a\":%.4f,\"b\":%.4f,\"alpha\":%.4f}" \
         % [ c.l, c.a, c.b, c.alpha ]
 
+
 ## Creates a preset color for opaque black.
 static func black() -> Lab:
     return Lab.new(0.0, 0.0, 0.0, 1.0)
+
 
 ## Creates a preset color for blue in SR LAB 2.
 static func blue() -> Lab:
@@ -283,13 +350,16 @@ static func blue() -> Lab:
         -110.807801954524,
         1.0)
 
+
 ## Creates a preset color for invisible black.
 static func clear_black() -> Lab:
     return Lab.new(0.0, 0.0, 0.0, 0.0)
 
+
 ## Creates a preset color for invisible white.
 static func clear_white() -> Lab:
     return Lab.new(100.0, 0.0, 0.0, 0.0)
+
 
 ## Creates a preset color for cyan in SR LAB 2.
 static func cyan() -> Lab:
@@ -299,6 +369,7 @@ static func cyan() -> Lab:
         -15.0091246790041,
         1.0)
 
+
 ## Creates a preset color for green in SR LAB 2.
 static func green() -> Lab:
     return Lab.new(
@@ -306,6 +377,7 @@ static func green() -> Lab:
         -82.9559689892563,
         83.0367796678485,
         1.0)
+
 
 ## Creates a preset color for magenta in SR LAB 2.
 static func magenta() -> Lab:
@@ -315,6 +387,7 @@ static func magenta() -> Lab:
         -61.0020511842712,
         1.0)
 
+
 ## Creates a preset color for red in SR LAB 2.
 static func red() -> Lab:
     return Lab.new(
@@ -323,9 +396,11 @@ static func red() -> Lab:
         67.7006179200894,
         1.0)
 
+
 ## Creates a preset color for opaque white.
 static func white() -> Lab:
     return Lab.new(100.0, 0.0, 0.0, 1.0)
+
 
 ## Creates a preset color for yellow in SR LAB 2.
 static func yellow() -> Lab:

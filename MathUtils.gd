@@ -1,8 +1,10 @@
 ## A static class for methods that handle real numbers.
 class_name MathUtils
 
+
 ## Determines arc direction when mixing angles.
 enum PolarEasing { CCW, CW, FAR, NEAR }
+
 
 ## Eases an origin angle to a destination angle according to a factor in
 ## [0.0, 1.0]. The range can be customized, where typical arguments are
@@ -20,6 +22,7 @@ static func mix_angle(o: float, \
         elif dir == MathUtils.PolarEasing.FAR:
             return MathUtils.mix_angle_far(o, d, t, r)
         return MathUtils.mix_angle_near(o, d, t, r)
+
 
 ## Eases an origin angle to a destination angle in the counter-clockwise
 ## direction according to a factor in [0.0, 1.0]. The range can be customized,
@@ -42,6 +45,7 @@ static func mix_angle_ccw(o: float, \
     else:
         return u * o_wrapped + t * d_wrapped
 
+
 ## Eases an origin angle to a destination angle in the clockwise direction
 ## according to a factor in [0.0, 1.0]. The range can be customized, where
 ## typical arguments are TAU for radians, 360.0 for degrees and 1.0 for hues.
@@ -61,6 +65,7 @@ static func mix_angle_cw(o: float, \
         return fposmod(u * (o_wrapped + r) + t * d_wrapped, r)
     else:
         return u * o_wrapped + t * d_wrapped
+
 
 ## Eases an origin angle to a destination angle across the longest arc
 ## length -- clockwise or counter clockwise -- according to a factor in
@@ -83,6 +88,7 @@ static func mix_angle_far(o: float, \
         return fposmod(u * o_wrapped + t * (d_wrapped + r), r)
     else:
         return u * o_wrapped + t * d_wrapped
+
 
 ## Eases an origin angle to a destination angle across the shortest arc
 ## length -- clockwise or counter clockwise -- according to a factor in
@@ -110,6 +116,7 @@ static func mix_angle_near(o: float, \
     else:
         return u * o_wrapped + t * d_wrapped
 
+
 ## Quantizes a signed number according to a number of levels.
 ## The quantization is centered about the range.
 ## If the levels are less than 1, returns the input value unchanged.
@@ -117,6 +124,7 @@ static func quantize_signed(v: float, levels: int) -> float:
     if levels > 0:
         return floor(0.5 + v * levels) / levels
     return v
+
 
 ## Quantizes a positive number according to a number of levels.
 ## The quantization is based on the left edge.
