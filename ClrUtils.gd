@@ -174,6 +174,72 @@ static func mix_linear_rgb(o: Rgb, d: Rgb, t: float = 0.5) -> Rgb:
         u * o.alpha + t * d.alpha)
 
 
+## Mixes two colors that represent normals used in dynamic lighting. Uses
+## spherical linear interpolation, geometric formula. See
+## https://en.wikipedia.org/wiki/Slerp . Colors should be in gamma sRGB.
+static func mix_normal(o: Rgb, d: Rgb, t: float = 0.5) -> Rgb:
+    var ox: float = o.r + o.r - 1.0
+    var oy: float = o.g + o.g - 1.0
+    var oz: float = o.b + o.b - 1.0
+    var ow: float = o.alpha
+
+    var om_sq: float = ox * ox + oy * oy + oz * oz
+    if om_sq > 0.0:
+        var om_inv: float = 1.0 / sqrt(om_sq)
+        ox = ox * om_inv
+        oy = oy * om_inv
+        oz = oz * om_inv
+
+    if t <= 0.0: return Rgb.new(
+        ox * 0.5 + 0.5,
+        oy * 0.5 + 0.5,
+        oz * 0.5 + 0.5,
+        ow)
+
+    var dx: float = d.r + d.r - 1.0
+    var dy: float = d.g + d.g - 1.0
+    var dz: float = d.b + d.b - 1.0
+    var dw: float = d.alpha
+
+    var dm_sq: float = dx * dx + dy * dy + dz * dz
+    if dm_sq > 0.0:
+        var dm_inv: float = 1.0 / sqrt(dm_sq)
+        dx = dx * dm_inv
+        dy = dy * dm_inv
+        dz = dz * dm_inv
+
+    if t >= 1.0: return Rgb.new(
+        dx * 0.5 + 0.5,
+        dy * 0.5 + 0.5,
+        dz * 0.5 + 0.5,
+        dw)
+
+    var od_dot: float = clamp(ox * dx + oy * dy + oz * dz, -0.999999, 0.999999)
+    var omega: float = acos(od_dot)
+    var om_sin: float = sin(omega)
+    var om_sin_inv: float = 1.0
+    if om_sin != 0.0: om_sin_inv = 1.0 / om_sin
+    var u: float = 1.0 - t
+    var o_fac: float = sin(u * omega) * om_sin_inv
+    var d_fac: float = sin(t * omega) * om_sin_inv
+
+    var cx: float = o_fac * ox + d_fac * dx
+    var cy: float = o_fac * oy + d_fac * dy
+    var cz: float = o_fac * oz + d_fac * dz
+    var cw: float = u * ow + t * dw
+
+    var cm_sq: float = cx * cx + cy * cy + cz * cz
+    if cm_sq > 0.0:
+        var cm_inv: float = 0.5 / sqrt(cm_sq)
+        return Rgb.new(
+            cx * cm_inv + 0.5,
+            cy * cm_inv + 0.5,
+            cz * cm_inv + 0.5,
+            cw)
+
+    return Rgb.new(0.5, 0.5, 0.5, cw)
+
+
 ## Quantizes a color in gamma sRGB. Assumes colors are in gamut. Uses unsigned
 ## quantization.
 static func quantize_gamma_rgb(c: Rgb, \

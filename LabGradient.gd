@@ -70,7 +70,7 @@ static func distributed(source: LabGradient) -> LabGradient:
             LabKey.new(1.0, Lab.white())
             ])
 
-    var i_to_step = 1.0 / (len_ks - 1.0)
+    var i_to_step: float = 1.0 / (len_ks - 1.0)
 
     var i: int = 0
     while i < len_ks:
@@ -187,7 +187,7 @@ static func extent(cg: LabGradient) -> float:
 ## Creates a gradient from an array of LAB colors. If the array's length is
 ## 0, then returns a black and white gradient. If the array's length is 1,
 ## then places the color between black and white. Copies colors by value.
-static func from_colors_lab(cs: Array) -> LabGradient:
+static func from_colors(cs: Array) -> LabGradient:
     var len_colors: int = cs.size()
 
     if len_colors == 0:
@@ -204,7 +204,7 @@ static func from_colors_lab(cs: Array) -> LabGradient:
 
     var ks: Array = []
     var i: int = 0
-    var i_to_fac: float = 1.0 / (len_colors - 1)
+    var i_to_fac: float = 1.0 / (len_colors - 1.0)
     while i < len_colors:
         var step: float = i * i_to_fac
         var color: Lab = Lab.copy(cs[i])
@@ -370,7 +370,7 @@ static func to_svg_string(cg: LabGradient, \
 
         var t01: float = clamp(lab.alpha, 0.0, 1.0)
         var t01_str: String = "%.6f" % t01
-        var include_opacity: bool = t01 < 1.0
+        var include_opacity: bool = t01 < 0.999999
 
         svgp.append("<stop offset=\"")
         svgp.append("%.6f" % step)

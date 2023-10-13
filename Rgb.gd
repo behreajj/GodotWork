@@ -36,22 +36,22 @@ func _to_string() -> String:
 
 ## Finds the color's alpha expressed as a byte in [0, 255].
 static func byte_alpha(c: Rgb) -> int:
-    return int(clamp(c.alpha, 0.0, 1.0) * 255 + 0.5)
+    return int(clamp(c.alpha, 0.0, 1.0) * 255.0 + 0.5)
 
 
 ## Finds the color's blue channel expressed as a byte in [0, 255].
 static func byte_blue(c: Rgb) -> int:
-    return int(clamp(c.b, 0.0, 1.0) * 255 + 0.5)
+    return int(clamp(c.b, 0.0, 1.0) * 255.0 + 0.5)
 
 
 ## Finds the color's green channel expressed as a byte in [0, 255].
 static func byte_green(c: Rgb) -> int:
-    return int(clamp(c.g, 0.0, 1.0) * 255 + 0.5)
+    return int(clamp(c.g, 0.0, 1.0) * 255.0 + 0.5)
 
 
 ## Finds the color's red channel expressed as a byte in [0, 255].
 static func byte_red(c: Rgb) -> int:
-    return int(clamp(c.r, 0.0, 1.0) * 255 + 0.5)
+    return int(clamp(c.r, 0.0, 1.0) * 255.0 + 0.5)
 
 
 ## Clamps all color components to the range [0.0, 1.0].
@@ -72,6 +72,12 @@ static func copy(source: Rgb) -> Rgb:
 ## channels adopt the values of the left operand.
 static func copy_alpha(o: Rgb, d: Rgb) -> Rgb:
     return Rgb.new(o.r, o.g, o.b, d.alpha)
+
+
+## Evaluates whether two colors are equal when represented as 32-bit integers
+## in the format 0xAABBGGRR.
+static func eq(o: Rgb, d: Rgb) -> bool:
+    return Rgb.to_abgr_32(o) == Rgb.to_abgr_32(d)
 
 
 ## Creates a color from an integer with packed channels in 0xAABBGGRR order.
@@ -196,6 +202,18 @@ static func grid_cartesian(cols: int = 8, \
     return result
 
 
+## Evaluates whether a color is greater than another when both are represented
+## as 32-bit integers in the format 0xAABBGGRR.
+static func gt(o: Rgb, d: Rgb) -> bool:
+    return Rgb.to_abgr_32(o) > Rgb.to_abgr_32(d)
+
+
+## Evaluates whether a color is greater than or equal to another when both are
+## represented as 32-bit integers in the format 0xAABBGGRR.
+static func gt_eq(o: Rgb, d: Rgb) -> bool:
+    return Rgb.to_abgr_32(o) >= Rgb.to_abgr_32(d)
+
+
 ## Evaluates whether a color is in gamut, i.e., whether the red, green and
 ## blue channels are all within [0.0, 1.0] plus or minus an epsilon. The
 ## epsilon requires adjustment based on, e.g., the LAB variant used.
@@ -229,6 +247,18 @@ static func linear_to_gamma(c: Rgb) -> Rgb:
         sb = pow(sb, inverse_gamma) * 1.055 - 0.055
 
     return Rgb.new(sr, sg, sb, c.alpha)
+
+
+## Evaluates whether a color is less than another when both are represented
+## as 32-bit integers in the format 0xAABBGGRR.
+static func lt(o: Rgb, d: Rgb) -> bool:
+    return Rgb.to_abgr_32(o) < Rgb.to_abgr_32(d)
+
+
+## Evaluates whether a color is less or equal to than another when both are
+## represented as 32-bit integers in the format 0xAABBGGRR.
+static func lt_eq(o: Rgb, d: Rgb) -> bool:
+    return Rgb.to_abgr_32(o) <= Rgb.to_abgr_32(d)
 
 
 ## Finds an opaque version of the color, where the alpha is 1.0.
@@ -292,29 +322,29 @@ static func tone_map_aces_linear(c: Rgb) -> Rgb:
 ## to [0, 255], i.e. uses saturation arithmetic. The channels are packed in
 ## the order alpha, blue, green, red.
 static func to_abgr_32(c: Rgb) -> int:
-    return int(clamp(c.alpha, 0.0, 1.0) * 255 + 0.5) << 0x18 \
-        | int(clamp(c.b, 0.0, 1.0) * 255 + 0.5) << 0x10 \
-        | int(clamp(c.g, 0.0, 1.0) * 255 + 0.5) << 0x08 \
-        | int(clamp(c.r, 0.0, 1.0) * 255 + 0.5)
+    return int(clamp(c.alpha, 0.0, 1.0) * 255.0 + 0.5) << 0x18 \
+        | int(clamp(c.b, 0.0, 1.0) * 255.0 + 0.5) << 0x10 \
+        | int(clamp(c.g, 0.0, 1.0) * 255.0 + 0.5) << 0x08 \
+        | int(clamp(c.r, 0.0, 1.0) * 255.0 + 0.5)
 
 
 ## Finds the color expressed as a 32 bit integer. Clamps the color's channels
 ## to [0, 255], i.e. uses saturation arithmetic. The channels are packed in
 ## the order alpha, red, green, blue.
 static func to_argb_32(c: Rgb) -> int:
-    return int(clamp(c.alpha, 0.0, 1.0) * 255 + 0.5) << 0x18 \
-        | int(clamp(c.r, 0.0, 1.0) * 255 + 0.5) << 0x10 \
-        | int(clamp(c.g, 0.0, 1.0) * 255 + 0.5) << 0x08 \
-        | int(clamp(c.b, 0.0, 1.0) * 255 + 0.5)
+    return int(clamp(c.alpha, 0.0, 1.0) * 255.0 + 0.5) << 0x18 \
+        | int(clamp(c.r, 0.0, 1.0) * 255.0 + 0.5) << 0x10 \
+        | int(clamp(c.g, 0.0, 1.0) * 255.0 + 0.5) << 0x08 \
+        | int(clamp(c.b, 0.0, 1.0) * 255.0 + 0.5)
 
 
 ## Renders the color as a 6 digit, 24 bit hexadecimal string suitable for web
 ## development. The channels are packed in the order red, green, blue. There is
 ## no hashtag or '0x' prefix for the string.
 static func to_hex_web(c: Rgb) -> String:
-    return "%06x" % (int(clamp(c.r, 0.0, 1.0) * 255 + 0.5) << 0x10 \
-        | int(clamp(c.g, 0.0, 1.0) * 255 + 0.5) << 0x08 \
-        | int(clamp(c.b, 0.0, 1.0) * 255 + 0.5))
+    return "%06x" % (int(clamp(c.r, 0.0, 1.0) * 255.0 + 0.5) << 0x10 \
+        | int(clamp(c.g, 0.0, 1.0) * 255.0 + 0.5) << 0x08 \
+        | int(clamp(c.b, 0.0, 1.0) * 255.0 + 0.5))
 
 
 ## Renders a color as a string in JSON format.

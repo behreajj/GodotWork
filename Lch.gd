@@ -38,8 +38,30 @@ func _to_string() -> String:
 
 
 ## Adds the left and right operands, for the purpose of making adjustments.
-static func adjust(o: Lch, d: Lch) -> Lch:
-    return Lch.new(o.l + d.l, o.c + d.c, o.h + d.h, o.alpha + d.alpha)
+static func _add(o: Lch, d: Lch) -> Lch:
+    var hp: float = o.h + d.h
+    return Lch.new(o.l + d.l, o.c + d.c, hp - floorf(hp), o.alpha + d.alpha)
+
+
+## Finds the color's alpha expressed as a byte in [0, 255].
+static func byte_alpha(o: Lch) -> int:
+    return int(clamp(o.alpha, 0.0, 1.0) * 255.0 + 0.5)
+
+
+## Finds the color's chroma expressed as a byte in [0, 255].
+## Clamps the chroma to [0.0, 127.5], then multiplies by 2.
+static func byte_chroma(o: Lch) -> int:
+    return int(clamp(o.c, 0.0, 127.25) * 2.0 + 0.5)
+
+
+## Finds the color's hue expressed as a byte in [0, 255].
+static func byte_hue(o: Lch) -> int:
+    return int((o.h - floorf(o.h)) * 255.0 + 0.5)
+
+
+## Finds the color's lightness expressed as a byte in [0, 255].
+static func byte_light(o: Lch) -> int:
+    return int(clamp(o.l, 0.0, 100.0) * 2.55 + 0.5)
 
 
 ## Copies all components of the source color by value to a new color.
@@ -59,6 +81,31 @@ static func copy_light(o: Lch, d: Lch) -> Lch:
     return Lch.new(d.l, o.c, o.h, o.alpha)
 
 
+## Evaluates whether two colors are equal when represented as 32-bit integers.
+static func eq(o: Lch, d: Lch) -> bool:
+    return Lch._to_tlch_32(o) == Lch._to_tlch_32(d)
+
+
+## Creates a color from integers in the range [0, 255].
+static func from_bytes(lightness: int = 255, \
+    chroma: int = 0, \
+    hue: int = 0, \
+    opacity: int = 255) -> Lch:
+    return Lch.new(lightness / 2.55, \
+        chroma / 2.0, \
+        (hue & 0xff) / 255.0, \
+        opacity / 255.0)
+
+
+## Creates a color from a 32 bit integer.
+static func _from_tlch_32(d: int) -> Lch:
+    return Lch.new(
+        ((d >> 0x10) & 0xff) / 2.55,
+        ((d >> 0x08) & 0xff) / 2.0,
+        (d & 0xff) / 255.0,
+        ((d >> 0x18) & 0xff) / 255.0)
+
+
 ## Finds a grayscale version of the color, where chroma is zero.
 ## Retains the source's hue, even though it'd be undefined in grayscale.
 static func gray(lch: Lch) -> Lch:
@@ -70,8 +117,8 @@ static func gray(lch: Lch) -> Lch:
 ## Chroma is associated with the cylinder's rings, or radius.
 ## Lightness is associated with layers, or the z axis.
 static func grid_cylinder(
-    sectors: int = 16, \
-    rings: int = 8, \
+    sectors: int = 12, \
+    rings: int = 6, \
     layers: int = 8, \
     opacity: float = 1.0, \
     min_chroma: float = 15.0, \
@@ -132,7 +179,19 @@ static func grid_cylinder(
     return result
 
 
-## Creates an array of 2 LAB colors at analogous hues from the source.
+## Evaluates whether a color is greater than another when both are represented
+## as 32-bit integers.
+static func gt(o: Lch, d: Lch) -> bool:
+    return Lch._to_tlch_32(o) > Lch._to_tlch_32(d)
+
+
+## Evaluates whether a color is greater than or equal to another when both are
+## represented as 32-bit integers.
+static func gt_eq(o: Lch, d: Lch) -> bool:
+    return Lch._to_tlch_32(o) >= Lch._to_tlch_32(d)
+
+
+## Creates an array of 2 LCH colors at analogous hues from the source.
 ## The hues are positive and negative 30 degrees away.
 static func harmony_analogous(lch: Lch) -> Array:
     var l_ana: float = (lch.l * 2.0 + 50.0) / 3.0
@@ -141,22 +200,22 @@ static func harmony_analogous(lch: Lch) -> Array:
     var h330: float = lch.h - 0.08333333333333
 
     return [
-        Lch.new(l_ana, lch.c, h30 - floor(h30), lch.alpha),
-        Lch.new(l_ana, lch.c, h330 - floor(h330), lch.alpha)
+        Lch.new(l_ana, lch.c, h30 - floorf(h30), lch.alpha),
+        Lch.new(l_ana, lch.c, h330 - floorf(h330), lch.alpha)
     ]
 
 
-## Creates an array of 1 LAB color complementary to the source.
-## The hue is 180 degrees away, or the negation of the source a and b.
+## Creates an array of 1 LCH color complementary to the source.
+## The hue is 180 degrees away.
 static func harmony_complement(lch: Lch) -> Array:
     var l_cmp: float = 100.0 - lch.l
 
     var h180: float = lch.h + 0.5
 
-    return [ new(l_cmp, lch.c, h180 - floor(h180), lch.alpha) ]
+    return [ new(l_cmp, lch.c, h180 - floorf(h180), lch.alpha) ]
 
 
-## Creates an array of 2 LAB colors at split hues from the source.
+## Creates an array of 2 LCH colors at split hues from the source.
 ## The hues are 150 and 210 degrees away.
 static func harmony_split(lch: Lch) -> Array:
     var l_spl: float = (250.0 - lch.l * 2.0) / 3.0
@@ -165,12 +224,12 @@ static func harmony_split(lch: Lch) -> Array:
     var h210: float = lch.h - 0.04166666666667
 
     return [
-        Lch.new(l_spl, lch.c, h150 - floor(h150), lch.alpha),
-        Lch.new(l_spl, lch.c, h210 - floor(h210), lch.alpha)
+        Lch.new(l_spl, lch.c, h150 - floorf(h150), lch.alpha),
+        Lch.new(l_spl, lch.c, h210 - floorf(h210), lch.alpha)
     ]
 
 
-## Creates an array of 3 LAB colors at square hues from the source.
+## Creates an array of 3 LCH colors at square hues from the source.
 ## The hues are 90, 180 and 270 degrees away.
 static func harmony_square(lch: Lch) -> Array:
     var l_cmp: float = 100.0 - lch.l
@@ -180,13 +239,13 @@ static func harmony_square(lch: Lch) -> Array:
     var h270: float = lch.h - 0.25
 
     return [
-        Lch.new(50.0, lch.c, h90 - floor(h90), lch.alpha),
-        Lch.new(l_cmp, lch.c, h180 - floor(h180), lch.alpha),
-        Lch.new(50.0, lch.c, h270 - floor(h270), lch.alpha)
+        Lch.new(50.0, lch.c, h90 - floorf(h90), lch.alpha),
+        Lch.new(l_cmp, lch.c, h180 - floorf(h180), lch.alpha),
+        Lch.new(50.0, lch.c, h270 - floorf(h270), lch.alpha)
     ]
 
 
-## Creates an array of 3 LAB colors at tetradic hues from the source.
+## Creates an array of 3 LCH colors at tetradic hues from the source.
 ## The hues are 120, 180 and 300 degrees away.
 static func harmony_tetradic(lch: Lch) -> Array:
     var l_tri: float = (200.0 - lch.l) / 3.0
@@ -198,13 +257,13 @@ static func harmony_tetradic(lch: Lch) -> Array:
     var h300: float = lch.h - 0.16666666666667
 
     return [
-        Lch.new(l_tri, lch.c, h120 - floor(h120), lch.alpha),
-        Lch.new(l_cmp, lch.c, h180 - floor(h180), lch.alpha),
-        Lch.new(l_tet, lch.c, h300 - floor(h300), lch.alpha)
+        Lch.new(l_tri, lch.c, h120 - floorf(h120), lch.alpha),
+        Lch.new(l_cmp, lch.c, h180 - floorf(h180), lch.alpha),
+        Lch.new(l_tet, lch.c, h300 - floorf(h300), lch.alpha)
     ]
 
 
-## Creates an array of 2 LAB colors at triadic hues from the source.
+## Creates an array of 2 LCH colors at triadic hues from the source.
 ## The hues are positive and negative 120 degrees away.
 static func harmony_triadic(lch: Lch) -> Array:
     var l_tri: float = (200.0 - lch.l) / 3.0
@@ -213,19 +272,31 @@ static func harmony_triadic(lch: Lch) -> Array:
     var h240: float = lch.h - 0.33333333333333
 
     return [
-        Lch.new(l_tri, lch.c, h120 - floor(h120), lch.alpha),
-        Lch.new(l_tri, lch.c, h240 - floor(h240), lch.alpha)
+        Lch.new(l_tri, lch.c, h120 - floorf(h120), lch.alpha),
+        Lch.new(l_tri, lch.c, h240 - floorf(h240), lch.alpha)
     ]
 
 
 ## Finds the color's hue in degrees, [0, 360).
 static func hue_degrees(lch: Lch) -> float:
-    return (lch.h - floor(lch.h)) * 360.0
+    return (lch.h - floorf(lch.h)) * 360.0
 
 
 ## Finds the color's hue in degrees, [0, TAU).
 static func hue_radians(lch: Lch) -> float:
-    return (lch.h - floor(lch.h)) * TAU
+    return (lch.h - floorf(lch.h)) * TAU
+
+
+## Evaluates whether a color is less than another when both are represented
+## as 32-bit integers.
+static func lt(o: Lch, d: Lch) -> bool:
+    return Lch._to_tlch_32(o) < Lch._to_tlch_32(d)
+
+
+## Evaluates whether a color is less than or equal to another when both are
+## represented as 32-bit integers.
+static func lt_eq(o: Lch, d: Lch) -> bool:
+    return Lch._to_tlch_32(o) <= Lch._to_tlch_32(d)
 
 
 ## Finds an opaque version of the color, where the alpha is 1.0.
@@ -233,10 +304,24 @@ static func opaque(lch: Lch) -> Lch:
     return Lch.new(lch.l, lch.c, lch.h, 1.0)
 
 
+## Finds the signed difference between two colors.
+static func _sub(o: Lch, d: Lch) -> Lch:
+    var hs: float = o.h - d.h
+    return Lch.new(o.l - d.l, o.c - d.c, hs - floorf(hs), o.alpha + d.alpha)
+
+
 ## Renders a color as a string in JSON format.
 static func to_json_string(lch: Lch) -> String:
     return "{\"l\":%.4f,\"c\":%.4f,\"h\":%.4f,\"alpha\":%.4f}" \
         % [ lch.l, lch.c, lch.h, lch.alpha ]
+
+
+## Finds the color expressed as a 32 bit integer.
+static func _to_tlch_32(o: Lch) -> int:
+    return int(clamp(o.alpha, 0.0, 1.0) * 255.0 + 0.5) << 0x18 \
+        | int(clamp(o.l, 0.0, 100.0) * 2.55 + 0.5) << 0x10 \
+        | int(clamp(o.c, 0.0, 127.25) * 2.0 + 0.5) << 0x08 \
+        | int((o.h - floorf(o.h)) * 255.0 + 0.5)
 
 
 ## Creates a preset color for opaque black.
