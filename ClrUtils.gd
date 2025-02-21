@@ -152,10 +152,10 @@ static func mix_lch(o: Lch, \
 
         var ca: float = u * oa + t * da
         var cb: float = u * ob + t * db
-        var cc: float = sqrt(ca * ca + cb * cb)
-        var ch: float = fposmod(atan2(cb, ca), TAU) / TAU
+        var cc0: float = sqrt(ca * ca + cb * cb)
+        var ch0: float = fposmod(atan2(cb, ca), TAU) / TAU
 
-        return Lch.new(cl, cc, ch, c_alpha)
+        return Lch.new(cl, cc0, ch0, c_alpha)
 
     # Godot built-in lerp_angle may result in negative hues.
     # var ch: float = lerp_angle(o.h * TAU, d.h * TAU, t) / TAU

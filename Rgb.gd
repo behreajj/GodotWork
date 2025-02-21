@@ -99,11 +99,19 @@ static func from_argb_32(c: int) -> Rgb:
 
 
 ## Creates a color from integers in the range [0, 255].
-static func from_bytes(r255: int = 255, \
-    g255: int = 255, \
-    b255: int = 255, \
-    a255: int = 255) -> Rgb:
-    return Rgb.new(r255 / 255.0, g255 / 255.0, b255 / 255.0, a255 / 255.0)
+static func from_bytes(r8: int = 255, \
+    g8: int = 255, \
+    b8: int = 255, \
+    a8: int = 255) -> Rgb:
+    return Rgb.new(r8 / 255.0, g8 / 255.0, b8 / 255.0, a8 / 255.0)
+
+
+## Creates a color from integers in the range [0, 65535].
+static func from_shorts(r16: int = 65535, \
+    g16: int = 65535, \
+    b16: int = 65535, \
+    a16: int = 65535) -> Rgb:
+    return Rgb.new(r16 / 65535.0, g16 / 65535.0, b16 / 65535.0, a16 / 65535.0)
 
 
 ## Converts a color from gamma sRGB to linear sRGB.
@@ -275,6 +283,26 @@ static func premul(c: Rgb) -> Rgb:
     if t <= 0.0: return Rgb.clear_black()
     if t >= 1.0: return Rgb.opaque(c)
     return Rgb.new(c.r * t, c.g * t, c.b * t, t)
+
+
+## Finds the color's alpha channel expressed as a short in [0, 65535].
+static func short_alpha(c: Rgb) -> int:
+    return int(clamp(c.alpha, 0.0, 1.0) * 65535.0 + 0.5)
+
+
+## Finds the color's blue channel expressed as a short in [0, 65535].
+static func short_blue(c: Rgb) -> int:
+    return int(clamp(c.b, 0.0, 1.0) * 65535.0 + 0.5)
+
+
+## Finds the color's green channel expressed as a short in [0, 65535].
+static func short_green(c: Rgb) -> int:
+    return int(clamp(c.g, 0.0, 1.0) * 65535.0 + 0.5)
+
+
+## Finds the color's red channel expressed as a short in [0, 65535].
+static func short_red(c: Rgb) -> int:
+    return int(clamp(c.r, 0.0, 1.0) * 65535.0 + 0.5)
 
 
 ## For colors which exceed the range [0.0, 1.0] in gamma RGB, applies

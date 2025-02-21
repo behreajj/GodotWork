@@ -75,6 +75,18 @@ static func copy_alpha(o: Lch, d: Lch) -> Lch:
     return Lch.new(o.l, o.c, o.h, d.alpha)
 
 
+## Creates a color with the chroma of the right operand. The other channels
+## adopt the values of the left operand.
+static func copy_chroma(o: Lch, d: Lch) -> Lch:
+    return Lch.new(o.l, d.c, o.h, o.alpha)
+
+
+## Creates a color with the hue of the right operand. The other channels
+## adopt the values of the left operand.
+static func copy_hue(o: Lch, d: Lch) -> Lch:
+    return Lch.new(o.l, o.c, d.h, o.alpha)
+
+
 ## Creates a color with the alpha channel of the right operand. The other
 ## channels adopt the values of the left operand.
 static func copy_light(o: Lch, d: Lch) -> Lch:
@@ -91,9 +103,9 @@ static func from_bytes(lightness: int = 255, \
     chroma: int = 0, \
     hue: int = 0, \
     opacity: int = 255) -> Lch:
-    return Lch.new(lightness / 2.55, \
-        chroma / 2.0, \
-        (hue & 0xff) / 255.0, \
+    return Lch.new(lightness / 2.55,
+        chroma / 2.0,
+        (hue & 0xff) / 255.0,
         opacity / 255.0)
 
 

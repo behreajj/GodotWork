@@ -27,10 +27,6 @@ func _init(lightness: float = 100.0, \
     green_magenta: float = 0.0, \
     blue_yellow: float = 0.0, \
     opacity: float = 1.0):
-
-    # TODO: Consider switching to a mutable approach, as it's hard to enforce
-    # 'struct'-like seen in C#.
-
     self.l = lightness
     self.a = green_magenta
     self.b = blue_yellow
@@ -131,6 +127,26 @@ static func copy_alpha(o: Lab, d: Lab) -> Lab:
     return Lab.new(o.l, o.a, o.b, d.alpha)
 
 
+## Creates a color with the chroma of the right operand. The other channels
+## adopt the values of the left operand.
+static func copy_chroma(o: Lab, d: Lab) -> Lab:
+    var ocsq: float = Lab.chroma_sq(o)
+    if ocsq > 0.000001:
+        var s: float = Lab.chroma(d) / sqrt(ocsq)
+        return Lab.new(o.l, s * o.a, s * o.b, o.alpha)
+    return Lab.gray(o)
+
+
+## Creates a color with the hue of the right operand. The other channels
+## adopt the values of the left operand.
+static func copy_hue(o: Lab, d: Lab) -> Lab:
+    var dcsq: float = Lab.chroma_sq(d)
+    if dcsq > 0.000001:
+        var s: float = Lab.chroma(o) / sqrt(dcsq)
+        return Lab.new(o.l, s * d.a, s * d.b, o.alpha)
+    return Lab.gray(o)
+
+
 ## Creates a color with the alpha channel of the right operand. The other
 ## channels adopt the values of the left operand.
 static func copy_light(o: Lab, d: Lab) -> Lab:
@@ -157,9 +173,20 @@ static func from_bytes(lightness: int = 255, \
     blue_yellow: int = 128, \
     opacity: int = 255) -> Lab:
     return Lab.new(lightness / 2.55, \
-    (green_magenta & 0xff) - 128.0, \
-    (blue_yellow & 0xff) - 128.0, \
-    opacity / 255.0)
+        (green_magenta & 0xff) - 128.0, \
+        (blue_yellow & 0xff) - 128.0, \
+        opacity / 255.0)
+
+
+## Creates a color from integers in the range [0, 65535].
+static func from_shorts(lightness: int = 65535, \
+    green_magenta: int = 32768, \
+    blue_yellow: int = 32768, \
+    opacity: int = 65535) -> Lab:
+    return Lab.new(lightness / 655.35, \
+        ((green_magenta & 0xffff) - 32768) / 257.0, \
+        ((blue_yellow & 0xffff) - 32768) / 257.0, \
+        opacity / 65535.0)
 
 
 ## Creates a color from a 32 bit integer.
@@ -373,6 +400,25 @@ static func hue(c: Lab) -> float:
     return hue_unsigned / TAU
 
 
+## Finds the hue distance between two colors. When either color is gray,
+## returns zero. Otherwise, returns a number in the range [0.0, 0.5].
+static func hue_dist(o: Lab, d: Lab) -> float:
+    var ocsq: float = Lab.chroma_sq(o)
+    var dcsq: float = Lab.chroma_sq(d)
+
+    # Arguably, the distance from a saturated color to
+    # gray could be 0.5, different from the distance
+    # between two gray colors.
+    if ocsq < 0.000001 or dcsq < 0.000001:
+        return 0.0
+
+    # The numerator of the angle between formula is
+    # the dot product.
+    var numer: float = o.a * d.a + o.b * d.b
+    var denom: float = sqrt(ocsq) * sqrt(dcsq)
+    return acos(numer / denom) / TAU
+
+
 ## Evaluates whether a color is less than another when both are represented
 ## as 32-bit integers.
 static func lt(o: Lab, d: Lab) -> bool:
@@ -426,6 +472,26 @@ static func _scale(o: Lab, d: float) -> Lab:
 ## Multiplies the color's a and b components by a scalar.
 static func scale_chroma(c: Lab, scalar: float) -> Lab:
     return Lab.new(c.l, c.a * scalar, c.b * scalar, c.alpha)
+
+
+## Finds the color's a component expressed as a short in [0, 65535].
+static func short_a(c: Lab) -> int:
+    return 32768 + floori(257.0 * clamp(c.a, -127.5, 127.5))
+
+
+## Finds the color's alpha channel expressed as a short in [0, 65535].
+static func short_alpha(c: Lab) -> int:
+    return int(clamp(c.alpha, 0.0, 1.0) * 65535.0 + 0.5)
+
+
+## Finds the color's b component expressed as a short in [0, 65535].
+static func short_b(c: Lab) -> int:
+    return 32768 + floori(257.0 * clamp(c.b, -127.5, 127.5))
+
+
+## Finds the color's lightness expressed as a short in [0, 65535].
+static func short_light(c: Lab) -> int:
+    return int(clamp(c.l, 0.0, 100.0) * 655.35 + 0.5)
 
 
 ## Finds the signed difference between two colors.

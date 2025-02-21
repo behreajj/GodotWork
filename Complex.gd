@@ -60,7 +60,7 @@ static func cosine(z: Complex) -> Complex:
 
 ## Divides the left operand by the right. A convenience for multiplying the
 ## left operand by the inverse of the right.
-static func div(a: Complex, b:Complex) -> Complex:
+static func div(a: Complex, b: Complex) -> Complex:
     return Complex.mul(a, Complex.inverse(b))
 
 
