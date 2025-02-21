@@ -43,6 +43,30 @@ static func _add(o: Lch, d: Lch) -> Lch:
     return Lch.new(o.l + d.l, o.c + d.c, hp - floorf(hp), o.alpha + d.alpha)
 
 
+## Creates a color with the alpha channel of the right operand. The other
+## channels adopt the values of the left operand.
+static func adopt_alpha(o: Lch, d: Lch) -> Lch:
+    return Lch.new(o.l, o.c, o.h, d.alpha)
+
+
+## Creates a color with the chroma of the right operand. The other channels
+## adopt the values of the left operand.
+static func adopt_chroma(o: Lch, d: Lch) -> Lch:
+    return Lch.new(o.l, d.c, o.h, o.alpha)
+
+
+## Creates a color with the hue of the right operand. The other channels
+## adopt the values of the left operand.
+static func adopt_hue(o: Lch, d: Lch) -> Lch:
+    return Lch.new(o.l, o.c, d.h, o.alpha)
+
+
+## Creates a color with the alpha channel of the right operand. The other
+## channels adopt the values of the left operand.
+static func adopt_light(o: Lch, d: Lch) -> Lch:
+    return Lch.new(d.l, o.c, o.h, o.alpha)
+
+
 ## Finds the color's alpha expressed as a byte in [0, 255].
 static func byte_alpha(o: Lch) -> int:
     return int(clamp(o.alpha, 0.0, 1.0) * 255.0 + 0.5)
@@ -51,7 +75,7 @@ static func byte_alpha(o: Lch) -> int:
 ## Finds the color's chroma expressed as a byte in [0, 255].
 ## Clamps the chroma to [0.0, 127.5], then multiplies by 2.
 static func byte_chroma(o: Lch) -> int:
-    return int(clamp(o.c, 0.0, 127.25) * 2.0 + 0.5)
+    return int(clamp(o.c, 0.0, 127.5) * 2.0 + 0.5)
 
 
 ## Finds the color's hue expressed as a byte in [0, 255].
@@ -69,33 +93,9 @@ static func copy(source: Lch) -> Lch:
     return Lch.new(source.l, source.c, source.h, source.alpha)
 
 
-## Creates a color with the alpha channel of the right operand. The other
-## channels adopt the values of the left operand.
-static func copy_alpha(o: Lch, d: Lch) -> Lch:
-    return Lch.new(o.l, o.c, o.h, d.alpha)
-
-
-## Creates a color with the chroma of the right operand. The other channels
-## adopt the values of the left operand.
-static func copy_chroma(o: Lch, d: Lch) -> Lch:
-    return Lch.new(o.l, d.c, o.h, o.alpha)
-
-
-## Creates a color with the hue of the right operand. The other channels
-## adopt the values of the left operand.
-static func copy_hue(o: Lch, d: Lch) -> Lch:
-    return Lch.new(o.l, o.c, d.h, o.alpha)
-
-
-## Creates a color with the alpha channel of the right operand. The other
-## channels adopt the values of the left operand.
-static func copy_light(o: Lch, d: Lch) -> Lch:
-    return Lch.new(d.l, o.c, o.h, o.alpha)
-
-
-## Evaluates whether two colors are equal when represented as 32-bit integers.
+## Evaluates whether two colors are equal when represented as 64 bit integers.
 static func eq(o: Lch, d: Lch) -> bool:
-    return Lch._to_tlch_32(o) == Lch._to_tlch_32(d)
+    return Lch._to_tlch_64(o) == Lch._to_tlch_64(d)
 
 
 ## Creates a color from integers in the range [0, 255].
@@ -103,19 +103,41 @@ static func from_bytes(lightness: int = 255, \
     chroma: int = 0, \
     hue: int = 0, \
     opacity: int = 255) -> Lch:
-    return Lch.new(lightness / 2.55,
-        chroma / 2.0,
+    return Lch.new(
+        (lightness & 0xff) / 2.55,
+        (chroma & 0xff) / 2.0,
         (hue & 0xff) / 255.0,
-        opacity / 255.0)
+        (opacity & 0xff) / 255.0)
+
+
+## Creates a color from integers in the range [0, 65535].
+static func from_shorts(lightness: int = 65535, \
+    chroma: int = 0, \
+    hue: int = 0, \
+    opacity: int = 65535) -> Lch:
+    return Lch.new(
+        (lightness & 0xffff) / 655.35, \
+        (chroma & 0xffff) / 514.0,
+        (hue & 0xffff) / 65535.0,
+        (opacity & 0xffff) / 65535.0)
 
 
 ## Creates a color from a 32 bit integer.
-static func _from_tlch_32(d: int) -> Lch:
-    return Lch.new(
-        ((d >> 0x10) & 0xff) / 2.55,
-        ((d >> 0x08) & 0xff) / 2.0,
-        (d & 0xff) / 255.0,
-        ((d >> 0x18) & 0xff) / 255.0)
+static func _from_tlch_32(x: int) -> Lch:
+    return Lch.from_bytes(
+        x >> 0x10,
+        x >> 0x08,
+        x >> 0x00,
+        x >> 0x18)
+
+
+## Creates a color from a 64 bit integer.
+static func _from_tlch_64(x: int) -> Lch:
+    return Lch.from_shorts(
+        x >> 0x20,
+        x >> 0x10,
+        x >> 0x00,
+        x >> 0x30)
 
 
 ## Finds a grayscale version of the color, where chroma is zero.
@@ -192,15 +214,15 @@ static func grid_cylinder(
 
 
 ## Evaluates whether a color is greater than another when both are represented
-## as 32-bit integers.
+## as 64 bit integers.
 static func gt(o: Lch, d: Lch) -> bool:
-    return Lch._to_tlch_32(o) > Lch._to_tlch_32(d)
+    return Lch._to_tlch_64(o) > Lch._to_tlch_64(d)
 
 
 ## Evaluates whether a color is greater than or equal to another when both are
-## represented as 32-bit integers.
+## represented as 64 bit integers.
 static func gt_eq(o: Lch, d: Lch) -> bool:
-    return Lch._to_tlch_32(o) >= Lch._to_tlch_32(d)
+    return Lch._to_tlch_64(o) >= Lch._to_tlch_64(d)
 
 
 ## Creates an array of 2 LCH colors at analogous hues from the source.
@@ -300,20 +322,42 @@ static func hue_radians(lch: Lch) -> float:
 
 
 ## Evaluates whether a color is less than another when both are represented
-## as 32-bit integers.
+## as 64 bit integers.
 static func lt(o: Lch, d: Lch) -> bool:
-    return Lch._to_tlch_32(o) < Lch._to_tlch_32(d)
+    return Lch._to_tlch_64(o) < Lch._to_tlch_64(d)
 
 
 ## Evaluates whether a color is less than or equal to another when both are
-## represented as 32-bit integers.
+## represented as 64 bit integers.
 static func lt_eq(o: Lch, d: Lch) -> bool:
-    return Lch._to_tlch_32(o) <= Lch._to_tlch_32(d)
+    return Lch._to_tlch_64(o) <= Lch._to_tlch_64(d)
 
 
 ## Finds an opaque version of the color, where the alpha is 1.0.
-static func opaque(lch: Lch) -> Lch:
-    return Lch.new(lch.l, lch.c, lch.h, 1.0)
+static func opaque(o: Lch) -> Lch:
+    return Lch.new(o.l, o.c, o.h, 1.0)
+
+
+## Finds the color's alpha channel expressed as a short in [0, 65535].
+static func short_alpha(o: Lch) -> int:
+    return int(clamp(o.alpha, 0.0, 1.0) * 65535.0 + 0.5)
+
+
+## Finds the color's chroma expressed as a short in [0, 65535].
+## Multiplies the chroma by 257, clamps it to [0.0, 32767.5],
+## then multiplies by 2.
+static func short_chroma(o: Lch) -> int:
+    return int(clamp(o.c * 257.0, 0.0, 32767.5) * 2.0 + 0.5)
+
+
+## Finds the color's hue expressed as a short in [0, 65535].
+static func short_hue(o: Lch) -> int:
+    return int((o.h - floorf(o.h)) * 65535.0 + 0.5)
+
+
+## Finds the color's lightness expressed as a short in [0, 65535].
+static func short_light(o: Lch) -> int:
+    return int(clamp(o.l, 0.0, 100.0) * 655.35 + 0.5)
 
 
 ## Finds the signed difference between two colors.
@@ -330,10 +374,18 @@ static func to_json_string(lch: Lch) -> String:
 
 ## Finds the color expressed as a 32 bit integer.
 static func _to_tlch_32(o: Lch) -> int:
-    return int(clamp(o.alpha, 0.0, 1.0) * 255.0 + 0.5) << 0x18 \
-        | int(clamp(o.l, 0.0, 100.0) * 2.55 + 0.5) << 0x10 \
-        | int(clamp(o.c, 0.0, 127.25) * 2.0 + 0.5) << 0x08 \
-        | int((o.h - floorf(o.h)) * 255.0 + 0.5)
+    return Lch.byte_alpha(o) << 0x18 \
+        | Lch.byte_light(o) << 0x10 \
+        | Lch.byte_chroma(o) << 0x08 \
+        | Lch.byte_hue(o)
+
+
+## Finds the color expressed as a 64 bit integer.
+static func _to_tlch_64(o: Lch) -> int:
+    return Lch.short_alpha(o) << 0x30 \
+        | Lch.short_light(o) << 0x20 \
+        | Lch.short_chroma(o) << 0x10 \
+        | Lch.short_hue(o)
 
 
 ## Creates a preset color for opaque black.

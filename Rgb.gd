@@ -34,6 +34,12 @@ func _to_string() -> String:
     return Rgb.to_json_string(self)
 
 
+## Creates a color with the alpha channel of the right operand. The other
+## channels adopt the values of the left operand.
+static func adopt_alpha(o: Rgb, d: Rgb) -> Rgb:
+    return Rgb.new(o.r, o.g, o.b, d.alpha)
+
+
 ## Finds the color's alpha expressed as a byte in [0, 255].
 static func byte_alpha(c: Rgb) -> int:
     return int(clamp(c.alpha, 0.0, 1.0) * 255.0 + 0.5)
@@ -66,12 +72,6 @@ static func clamp_01(c: Rgb) -> Rgb:
 ## Copies all components of the source color by value to a new color.
 static func copy(source: Rgb) -> Rgb:
     return Rgb.new(source.r, source.g, source.b, source.alpha)
-
-
-## Creates a color with the alpha channel of the right operand. The other
-## channels adopt the values of the left operand.
-static func copy_alpha(o: Rgb, d: Rgb) -> Rgb:
-    return Rgb.new(o.r, o.g, o.b, d.alpha)
 
 
 ## Evaluates whether two colors are equal when represented as 32-bit integers

@@ -43,6 +43,38 @@ static func _add(o: Lab, d: Lab) -> Lab:
     return Lab.new(o.l + d.l, o.a + d.a, o.b + d.b, o.alpha + d.alpha)
 
 
+## Creates a color with the alpha channel of the right operand. The other
+## channels adopt the values of the left operand.
+static func adopt_alpha(o: Lab, d: Lab) -> Lab:
+    return Lab.new(o.l, o.a, o.b, d.alpha)
+
+
+## Creates a color with the chroma of the right operand. The other channels
+## adopt the values of the left operand.
+static func adopt_chroma(o: Lab, d: Lab) -> Lab:
+    var ocsq: float = Lab.chroma_sq(o)
+    if ocsq > 0.000001:
+        var s: float = Lab.chroma(d) / sqrt(ocsq)
+        return Lab.new(o.l, s * o.a, s * o.b, o.alpha)
+    return Lab.gray(o)
+
+
+## Creates a color with the hue of the right operand. The other channels
+## adopt the values of the left operand.
+static func adopt_hue(o: Lab, d: Lab) -> Lab:
+    var dcsq: float = Lab.chroma_sq(d)
+    if dcsq > 0.000001:
+        var s: float = Lab.chroma(o) / sqrt(dcsq)
+        return Lab.new(o.l, s * d.a, s * d.b, o.alpha)
+    return Lab.gray(o)
+
+
+## Creates a color with the alpha channel of the right operand. The other
+## channels adopt the values of the left operand.
+static func adopt_light(o: Lab, d: Lab) -> Lab:
+    return Lab.new(d.l, o.a, o.b, o.alpha)
+
+
 ## Evaluates whether two colors are approximately equal according to a
 ## tolerance.
 static func approx(o: Lab, \
@@ -85,72 +117,40 @@ static func bezier_tangent(ap0: Lab, \
 
 ## Finds the color's a component expressed as a byte in [0, 255].
 ## Clamps to the range [-127.5, 127.5], floors to an int, then adds 128.
-static func byte_a(c: Lab) -> int:
-    return 128 + floori(clamp(c.a, -127.5, 127.5))
+static func byte_a(o: Lab) -> int:
+    return 128 + floori(clamp(o.a, -127.5, 127.5))
 
 
 ## Finds the color's alpha expressed as a byte in [0, 255].
-static func byte_alpha(c: Lab) -> int:
-    return int(clamp(c.alpha, 0.0, 1.0) * 255.0 + 0.5)
+static func byte_alpha(o: Lab) -> int:
+    return int(clamp(o.alpha, 0.0, 1.0) * 255.0 + 0.5)
 
 
 ## Finds the color's b component expressed as a byte in [0, 255].
 ## Clamps to the range [-127.5, 127.5], floors to an int, then adds 128.
-static func byte_b(c: Lab) -> int:
-    return 128 + floori(clamp(c.b, -127.5, 127.5))
+static func byte_b(o: Lab) -> int:
+    return 128 + floori(clamp(o.b, -127.5, 127.5))
 
 
 ## Finds the color's lightness expressed as a byte in [0, 255].
-static func byte_light(c: Lab) -> int:
-    return int(clamp(c.l, 0.0, 100.0) * 2.55 + 0.5)
+static func byte_light(o: Lab) -> int:
+    return int(clamp(o.l, 0.0, 100.0) * 2.55 + 0.5)
 
 
 ## Finds a color's chroma. Finds the Euclidean distance of a and b from the
 ## origin.
-static func chroma(c: Lab) -> float:
-    return sqrt(Lab.chroma_sq(c))
+static func chroma(o: Lab) -> float:
+    return sqrt(Lab.chroma_sq(o))
 
 
 ## Finds a color's chroma squared, the sum of its a and b channels squared.
-static func chroma_sq(c: Lab) -> float:
-    return c.a * c.a + c.b * c.b
+static func chroma_sq(o: Lab) -> float:
+    return o.a * o.a + o.b * o.b
 
 
 ## Copies all components of the source color by value to a new color.
 static func copy(source: Lab) -> Lab:
     return Lab.new(source.l, source.a, source.b, source.alpha)
-
-
-## Creates a color with the alpha channel of the right operand. The other
-## channels adopt the values of the left operand.
-static func copy_alpha(o: Lab, d: Lab) -> Lab:
-    return Lab.new(o.l, o.a, o.b, d.alpha)
-
-
-## Creates a color with the chroma of the right operand. The other channels
-## adopt the values of the left operand.
-static func copy_chroma(o: Lab, d: Lab) -> Lab:
-    var ocsq: float = Lab.chroma_sq(o)
-    if ocsq > 0.000001:
-        var s: float = Lab.chroma(d) / sqrt(ocsq)
-        return Lab.new(o.l, s * o.a, s * o.b, o.alpha)
-    return Lab.gray(o)
-
-
-## Creates a color with the hue of the right operand. The other channels
-## adopt the values of the left operand.
-static func copy_hue(o: Lab, d: Lab) -> Lab:
-    var dcsq: float = Lab.chroma_sq(d)
-    if dcsq > 0.000001:
-        var s: float = Lab.chroma(o) / sqrt(dcsq)
-        return Lab.new(o.l, s * d.a, s * d.b, o.alpha)
-    return Lab.gray(o)
-
-
-## Creates a color with the alpha channel of the right operand. The other
-## channels adopt the values of the left operand.
-static func copy_light(o: Lab, d: Lab) -> Lab:
-    return Lab.new(d.l, o.a, o.b, o.alpha)
 
 
 ## Finds the Euclidean distance between two colors.
@@ -162,9 +162,9 @@ static func dist_euclidean(o: Lab, d: Lab, alpha_scalar: float = 1.0) -> float:
     return sqrt(vl * vl + va * va + vb * vb + vt * vt)
 
 
-## Evaluates whether two colors are equal when represented as 32-bit integers.
+## Evaluates whether two colors are equal when represented as 64 bit integers.
 static func eq(o: Lab, d: Lab) -> bool:
-    return Lab._to_tlab_32(o) == Lab._to_tlab_32(d)
+    return Lab._to_tlab_64(o) == Lab._to_tlab_64(d)
 
 
 ## Creates a color from integers in the range [0, 255].
@@ -172,10 +172,11 @@ static func from_bytes(lightness: int = 255, \
     green_magenta: int = 128, \
     blue_yellow: int = 128, \
     opacity: int = 255) -> Lab:
-    return Lab.new(lightness / 2.55, \
+    return Lab.new(
+        (lightness & 0xff) / 2.55, \
         (green_magenta & 0xff) - 128.0, \
         (blue_yellow & 0xff) - 128.0, \
-        opacity / 255.0)
+        (opacity & 0xff) / 255.0)
 
 
 ## Creates a color from integers in the range [0, 65535].
@@ -183,19 +184,29 @@ static func from_shorts(lightness: int = 65535, \
     green_magenta: int = 32768, \
     blue_yellow: int = 32768, \
     opacity: int = 65535) -> Lab:
-    return Lab.new(lightness / 655.35, \
+    return Lab.new(
+        (lightness & 0xffff) / 655.35, \
         ((green_magenta & 0xffff) - 32768) / 257.0, \
         ((blue_yellow & 0xffff) - 32768) / 257.0, \
-        opacity / 65535.0)
+        (opacity & 0xffff) / 65535.0)
 
 
 ## Creates a color from a 32 bit integer.
-static func _from_tlab_32(c: int) -> Lab:
-    return Lab.new(
-        ((c >> 0x10) & 0xff) / 2.55,
-        ((c >> 0x08) & 0xff) - 128.0,
-        (c & 0xff) - 128.0,
-        ((c >> 0x18) & 0xff) / 255.0)
+static func _from_tlab_32(x: int) -> Lab:
+    return Lab.from_bytes(
+        x >> 0x10,
+        x >> 0x08,
+        x >> 0x00,
+        x >> 0x18)
+
+
+## Creates a color from a 32 bit integer.
+static func _from_tlab_64(x: int) -> Lab:
+    return Lab.from_bytes(
+        x >> 0x20,
+        x >> 0x10,
+        x >> 0x00,
+        x >> 0x30)
 
 
 ## Finds a grayscale version of the color, where a and b are zero.
@@ -276,15 +287,15 @@ static func grid_cartesian(cols: int = 8, \
 
 
 ## Evaluates whether a color is greater than another when both are represented
-## as 32-bit integers.
+## as 64 bit integers.
 static func gt(o: Lab, d: Lab) -> bool:
-    return Lab._to_tlab_32(o) > Lab._to_tlab_32(d)
+    return Lab._to_tlab_64(o) > Lab._to_tlab_64(d)
 
 
 ## Evaluates whether a color is greater than or equal to another when both are
-## represented as 32-bit integers.
+## represented as 64 bit integers.
 static func gt_eq(o: Lab, d: Lab) -> bool:
-    return Lab._to_tlab_32(o) >= Lab._to_tlab_32(d)
+    return Lab._to_tlab_64(o) >= Lab._to_tlab_64(d)
 
 
 ## Creates an array of 2 LAB colors at analogous hues from the source.
@@ -392,17 +403,13 @@ static func harmony_triadic(c: Lab) -> Array:
 
 ## Finds the source color's hue, the wrapped and normalized arctangent of a
 ## and b.
-static func hue(c: Lab) -> float:
-    var hue_signed: float = atan2(c.b, c.a)
-    var hue_unsigned: float = hue_signed
-    if hue_signed < -0.0:
-        hue_unsigned = hue_signed + TAU
-    return hue_unsigned / TAU
+static func hue(o: Lab) -> float:
+    return Lab.hue_radians(o) / TAU
 
 
 ## Finds the hue distance between two colors. When either color is gray,
 ## returns zero. Otherwise, returns a number in the range [0.0, 0.5].
-static func hue_dist(o: Lab, d: Lab) -> float:
+static func hue_between(o: Lab, d: Lab) -> float:
     var ocsq: float = Lab.chroma_sq(o)
     var dcsq: float = Lab.chroma_sq(d)
 
@@ -419,16 +426,30 @@ static func hue_dist(o: Lab, d: Lab) -> float:
     return acos(numer / denom) / TAU
 
 
+## Finds the color's hue in degrees, [0, 360).
+static func hue_degrees(o: Lab) -> float:
+    return rad_to_deg(Lab.hue_radians(o))
+
+
+## Finds the color's hue in radians, [0, TAU).
+static func hue_radians(o: Lab) -> float:
+    var hue_signed: float = atan2(o.b, o.a)
+    var hue_unsigned: float = hue_signed
+    if hue_signed < -0.0:
+        hue_unsigned = hue_signed + TAU
+    return hue_unsigned
+
+
 ## Evaluates whether a color is less than another when both are represented
-## as 32-bit integers.
+## as 64 bit integers.
 static func lt(o: Lab, d: Lab) -> bool:
-    return Lab._to_tlab_32(o) < Lab._to_tlab_32(d)
+    return Lab._to_tlab_64(o) < Lab._to_tlab_64(d)
 
 
 ## Evaluates whether a color is less than or equal to another when both are
-## represented as 32-bit integers.
+## represented as 64 bit integers.
 static func lt_eq(o: Lab, d: Lab) -> bool:
-    return Lab._to_tlab_32(o) <= Lab._to_tlab_32(d)
+    return Lab._to_tlab_64(o) <= Lab._to_tlab_64(d)
 
 
 ## Finds an opaque version of the color, where the alpha is 1.0.
@@ -441,8 +462,8 @@ static func opaque(c: Lab) -> Lab:
 static func rescale_chroma(c: Lab, scalar: float) -> Lab:
     var c_sq: float = Lab.chroma_sq(c)
     if c_sq > 0.000001:
-        var sc_inv: float = scalar / sqrt(c_sq)
-        return Lab.new(c.l, c.a * sc_inv, c.b * sc_inv, c.alpha)
+        var s: float = scalar / sqrt(c_sq)
+        return Lab.new(c.l, s * c.a, s * c.b, c.alpha)
     return Lab.gray(c)
 
 
@@ -475,23 +496,23 @@ static func scale_chroma(c: Lab, scalar: float) -> Lab:
 
 
 ## Finds the color's a component expressed as a short in [0, 65535].
-static func short_a(c: Lab) -> int:
-    return 32768 + floori(257.0 * clamp(c.a, -127.5, 127.5))
+static func short_a(o: Lab) -> int:
+    return 32768 + floori(257.0 * clamp(o.a, -127.5, 127.5))
 
 
 ## Finds the color's alpha channel expressed as a short in [0, 65535].
-static func short_alpha(c: Lab) -> int:
-    return int(clamp(c.alpha, 0.0, 1.0) * 65535.0 + 0.5)
+static func short_alpha(o: Lab) -> int:
+    return int(clamp(o.alpha, 0.0, 1.0) * 65535.0 + 0.5)
 
 
 ## Finds the color's b component expressed as a short in [0, 65535].
-static func short_b(c: Lab) -> int:
-    return 32768 + floori(257.0 * clamp(c.b, -127.5, 127.5))
+static func short_b(o: Lab) -> int:
+    return 32768 + floori(257.0 * clamp(o.b, -127.5, 127.5))
 
 
 ## Finds the color's lightness expressed as a short in [0, 65535].
-static func short_light(c: Lab) -> int:
-    return int(clamp(c.l, 0.0, 100.0) * 655.35 + 0.5)
+static func short_light(o: Lab) -> int:
+    return int(clamp(o.l, 0.0, 100.0) * 655.35 + 0.5)
 
 
 ## Finds the signed difference between two colors.
@@ -506,11 +527,19 @@ static func to_json_string(c: Lab) -> String:
 
 
 ## Finds the color expressed as a 32 bit integer.
-static func _to_tlab_32(c: Lab) -> int:
-    return int(clamp(c.alpha, 0.0, 1.0) * 255.0 + 0.5) << 0x18 \
-        | int(clamp(c.l, 0.0, 100.0) * 2.55 + 0.5) << 0x10 \
-        | (128 + floori(clamp(c.a, -127.5, 127.5))) << 0x08 \
-        | (128 + floori(clamp(c.b, -127.5, 127.5)))
+static func _to_tlab_32(o: Lab) -> int:
+    return Lab.byte_alpha(o) << 0x18 \
+        | Lab.byte_light(o) << 0x10 \
+        | Lab.byte_a(o) << 0x08 \
+        | Lab.byte_b(o)
+
+
+## Finds the color expressed as a 64 bit integer.
+static func _to_tlab_64(o: Lab) -> int:
+    return Lab.short_alpha(o) << 0x30 \
+        | Lab.short_light(o) << 0x20 \
+        | Lab.short_a(o) << 0x10 \
+        | Lab.short_b(o)
 
 
 ## Creates a preset color for opaque black.
