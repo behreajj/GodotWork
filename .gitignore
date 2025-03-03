@@ -22,3 +22,4 @@ mono_crash.*.json
 *.tscn
 *.json
 tester.gd
+*.uid

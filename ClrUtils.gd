@@ -24,7 +24,7 @@ static func lab_to_lch(c: Lab) -> Lch:
 
 ## Converts a color from LCH to LAB.
 static func lch_to_lab(c: Lch) -> Lab:
-    var cr: float = max(0.0, abs(c.c))
+    var cr: float = maxf(0.0, absf(c.c))
     var hr: float = c.h * TAU
     return Lab.new(c.l, cr * cos(hr), cr * sin(hr), c.alpha)
 
@@ -128,8 +128,8 @@ static func mix_lch(o: Lch, \
     var cl: float = u * o.l + t * d.l
     var c_alpha: float = u * o.alpha + t * d.alpha
 
-    var oc: float = max(0.0, abs(o.c))
-    var dc: float = max(0.0, abs(d.c))
+    var oc: float = maxf(0.0, absf(o.c))
+    var dc: float = maxf(0.0, absf(d.c))
     var o_is_gray = oc < 0.000001
     var d_is_gray = dc < 0.000001
 
@@ -214,7 +214,7 @@ static func mix_normal(o: Rgb, d: Rgb, t: float = 0.5) -> Rgb:
         dz * 0.5 + 0.5,
         dw)
 
-    var od_dot: float = clamp(ox * dx + oy * dy + oz * dz, -0.999999, 0.999999)
+    var od_dot: float = clampf(ox * dx + oy * dy + oz * dz, -0.999999, 0.999999)
     var omega: float = acos(od_dot)
     var om_sin: float = sin(omega)
     var om_sin_inv: float = 1.0

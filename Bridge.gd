@@ -20,7 +20,7 @@ static func gradient_to_lab_gradient(g: Gradient, \
 
     # TODO: Test
 
-    var verif_samples: int = clamp(abs(samples), 2, 96)
+    var verif_samples: int = clampi(absi(samples), 2, 96)
     var i_to_fac: float = 1.0 / (verif_samples - 1)
     var ks: Array = []
 

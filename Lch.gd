@@ -39,8 +39,23 @@ func _to_string() -> String:
 
 ## Adds the left and right operands, for the purpose of making adjustments.
 static func _add(o: Lch, d: Lch) -> Lch:
-    var hp: float = o.h + d.h
-    return Lch.new(o.l + d.l, o.c + d.c, hp - floorf(hp), o.alpha + d.alpha)
+    # To make this consistent with any Lab polar addition method, the hue
+    # for gray colors must be treated as zero.
+    var oh: float = o.h
+    if o.c < 0.000001:
+        oh = 0.0
+
+    var dh: float = d.h
+    if d.c < 0.000001:
+        dh = 0.0
+
+    var ch: float = oh + dh
+
+    return Lch.new(
+        clampf(o.l - d.l, 0.0, 100.0),
+        maxf(o.c + d.c, 0.0),
+        ch - floorf(ch),
+        clampf(o.alpha + d.alpha, 0.0, 1.0))
 
 
 ## Creates a color with the alpha channel of the right operand. The other
@@ -160,16 +175,16 @@ static func grid_cylinder(
     min_light: float = 0.0, \
     max_light: float = 100.0) -> Array:
 
-    var mxl_vrf: float = max(min_light, max_light)
-    var mnl_vrf: float = min(min_light, max_light)
+    var mxl_vrf: float = maxf(min_light, max_light)
+    var mnl_vrf: float = minf(min_light, max_light)
 
-    var mxc_vrf: float = max(min_chroma, max_chroma)
-    var mnc_vrf: float = min(min_chroma, max_chroma)
+    var mxc_vrf: float = maxf(min_chroma, max_chroma)
+    var mnc_vrf: float = minf(min_chroma, max_chroma)
 
-    var t_vrf: float = clamp(opacity, 0.0, 1.0)
-    var l_vrf: int = max(1, layers)
-    var r_vrf: int = max(1, rings)
-    var s_vrf: int = max(2, sectors)
+    var t_vrf: float = clampf(opacity, 0.0, 1.0)
+    var l_vrf: int = maxi(1, layers)
+    var r_vrf: int = maxi(1, rings)
+    var s_vrf: int = maxi(2, sectors)
 
     var one_layer: bool = l_vrf == 1
     var x_to_step: float = 0.0
@@ -362,8 +377,23 @@ static func short_light(o: Lch) -> int:
 
 ## Finds the signed difference between two colors.
 static func _sub(o: Lch, d: Lch) -> Lch:
-    var hs: float = o.h - d.h
-    return Lch.new(o.l - d.l, o.c - d.c, hs - floorf(hs), o.alpha + d.alpha)
+    # To make this consistent with any Lab polar subtraction method, the hue
+    # for gray colors must be treated as zero.
+    var oh: float = o.h
+    if o.c < 0.000001:
+        oh = 0.0
+
+    var dh: float = d.h
+    if d.c < 0.000001:
+        dh = 0.0
+
+    var ch: float = oh - dh
+
+    return Lch.new(
+        clampf(o.l - d.l, 0.0, 100.0),
+        maxf(o.c - d.c, 0.0),
+        ch - floorf(ch),
+        clampf(o.alpha - d.alpha, 0.0, 1.0))
 
 
 ## Renders a color as a string in JSON format.

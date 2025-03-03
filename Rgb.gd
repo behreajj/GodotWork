@@ -42,31 +42,31 @@ static func adopt_alpha(o: Rgb, d: Rgb) -> Rgb:
 
 ## Finds the color's alpha expressed as a byte in [0, 255].
 static func byte_alpha(c: Rgb) -> int:
-    return int(clamp(c.alpha, 0.0, 1.0) * 255.0 + 0.5)
+    return int(clampf(c.alpha, 0.0, 1.0) * 255.0 + 0.5)
 
 
 ## Finds the color's blue channel expressed as a byte in [0, 255].
 static func byte_blue(c: Rgb) -> int:
-    return int(clamp(c.b, 0.0, 1.0) * 255.0 + 0.5)
+    return int(clampf(c.b, 0.0, 1.0) * 255.0 + 0.5)
 
 
 ## Finds the color's green channel expressed as a byte in [0, 255].
 static func byte_green(c: Rgb) -> int:
-    return int(clamp(c.g, 0.0, 1.0) * 255.0 + 0.5)
+    return int(clampf(c.g, 0.0, 1.0) * 255.0 + 0.5)
 
 
 ## Finds the color's red channel expressed as a byte in [0, 255].
 static func byte_red(c: Rgb) -> int:
-    return int(clamp(c.r, 0.0, 1.0) * 255.0 + 0.5)
+    return int(clampf(c.r, 0.0, 1.0) * 255.0 + 0.5)
 
 
 ## Clamps all color components to the range [0.0, 1.0].
 static func clamp_01(c: Rgb) -> Rgb:
     return Rgb.new( \
-        clamp(c.r, 0.0, 1.0), \
-        clamp(c.g, 0.0, 1.0), \
-        clamp(c.b, 0.0, 1.0), \
-        clamp(c.alpha, 0.0, 1.0))
+        clampf(c.r, 0.0, 1.0), \
+        clampf(c.g, 0.0, 1.0), \
+        clampf(c.b, 0.0, 1.0), \
+        clampf(c.alpha, 0.0, 1.0))
 
 
 ## Copies all components of the source color by value to a new color.
@@ -103,6 +103,7 @@ static func from_bytes(r8: int = 255, \
     g8: int = 255, \
     b8: int = 255, \
     a8: int = 255) -> Rgb:
+    # TODO: Make behaviour consistent with Lab, Lch functions.
     return Rgb.new(r8 / 255.0, g8 / 255.0, b8 / 255.0, a8 / 255.0)
 
 
@@ -111,6 +112,7 @@ static func from_shorts(r16: int = 65535, \
     g16: int = 65535, \
     b16: int = 65535, \
     a16: int = 65535) -> Rgb:
+    # TODO: Make behaviour consistent with Lab, Lch functions.
     return Rgb.new(r16 / 65535.0, g16 / 65535.0, b16 / 65535.0, a16 / 65535.0)
 
 
@@ -171,10 +173,10 @@ static func grid_cartesian(cols: int = 8, \
     layers: int = 8, \
     opacity: float = 1.0) -> Array:
 
-    var t_vrf: float = clamp(opacity, 0.0, 1.0)
-    var l_vrf: int = max(1, layers)
-    var r_vrf: int = max(1, rows)
-    var c_vrf: int = max(1, cols)
+    var t_vrf: float = clampf(opacity, 0.0, 1.0)
+    var l_vrf: int = maxi(1, layers)
+    var r_vrf: int = maxi(1, rows)
+    var c_vrf: int = maxi(1, cols)
 
     var one_layer: bool = l_vrf == 1
     var one_row: bool = r_vrf == 1
@@ -287,22 +289,22 @@ static func premul(c: Rgb) -> Rgb:
 
 ## Finds the color's alpha channel expressed as a short in [0, 65535].
 static func short_alpha(c: Rgb) -> int:
-    return int(clamp(c.alpha, 0.0, 1.0) * 65535.0 + 0.5)
+    return int(clampf(c.alpha, 0.0, 1.0) * 65535.0 + 0.5)
 
 
 ## Finds the color's blue channel expressed as a short in [0, 65535].
 static func short_blue(c: Rgb) -> int:
-    return int(clamp(c.b, 0.0, 1.0) * 65535.0 + 0.5)
+    return int(clampf(c.b, 0.0, 1.0) * 65535.0 + 0.5)
 
 
 ## Finds the color's green channel expressed as a short in [0, 65535].
 static func short_green(c: Rgb) -> int:
-    return int(clamp(c.g, 0.0, 1.0) * 65535.0 + 0.5)
+    return int(clampf(c.g, 0.0, 1.0) * 65535.0 + 0.5)
 
 
 ## Finds the color's red channel expressed as a short in [0, 65535].
 static func short_red(c: Rgb) -> int:
-    return int(clamp(c.r, 0.0, 1.0) * 65535.0 + 0.5)
+    return int(clampf(c.r, 0.0, 1.0) * 65535.0 + 0.5)
 
 
 ## For colors which exceed the range [0.0, 1.0] in gamma RGB, applies
@@ -340,39 +342,39 @@ static func tone_map_aces_linear(c: Rgb) -> Rgb:
     var b_bckwd: float = -0.00327 * cr - 0.07276 * cg + 1.07602 * cb
 
     return Rgb.new(
-        clamp(r_bckwd, 0.0, 1.0),
-        clamp(g_bckwd, 0.0, 1.0),
-        clamp(b_bckwd, 0.0, 1.0),
-        clamp(c.alpha, 0.0, 1.0))
+        clampf(r_bckwd, 0.0, 1.0),
+        clampf(g_bckwd, 0.0, 1.0),
+        clampf(b_bckwd, 0.0, 1.0),
+        clampf(c.alpha, 0.0, 1.0))
 
 
 ## Finds the color expressed as a 32 bit integer. Clamps the color's channels
 ## to [0, 255], i.e. uses saturation arithmetic. The channels are packed in
 ## the order alpha, blue, green, red.
 static func to_abgr_32(c: Rgb) -> int:
-    return int(clamp(c.alpha, 0.0, 1.0) * 255.0 + 0.5) << 0x18 \
-        | int(clamp(c.b, 0.0, 1.0) * 255.0 + 0.5) << 0x10 \
-        | int(clamp(c.g, 0.0, 1.0) * 255.0 + 0.5) << 0x08 \
-        | int(clamp(c.r, 0.0, 1.0) * 255.0 + 0.5)
+    return int(clampf(c.alpha, 0.0, 1.0) * 255.0 + 0.5) << 0x18 \
+        | int(clampf(c.b, 0.0, 1.0) * 255.0 + 0.5) << 0x10 \
+        | int(clampf(c.g, 0.0, 1.0) * 255.0 + 0.5) << 0x08 \
+        | int(clampf(c.r, 0.0, 1.0) * 255.0 + 0.5)
 
 
 ## Finds the color expressed as a 32 bit integer. Clamps the color's channels
 ## to [0, 255], i.e. uses saturation arithmetic. The channels are packed in
 ## the order alpha, red, green, blue.
 static func to_argb_32(c: Rgb) -> int:
-    return int(clamp(c.alpha, 0.0, 1.0) * 255.0 + 0.5) << 0x18 \
-        | int(clamp(c.r, 0.0, 1.0) * 255.0 + 0.5) << 0x10 \
-        | int(clamp(c.g, 0.0, 1.0) * 255.0 + 0.5) << 0x08 \
-        | int(clamp(c.b, 0.0, 1.0) * 255.0 + 0.5)
+    return int(clampf(c.alpha, 0.0, 1.0) * 255.0 + 0.5) << 0x18 \
+        | int(clampf(c.r, 0.0, 1.0) * 255.0 + 0.5) << 0x10 \
+        | int(clampf(c.g, 0.0, 1.0) * 255.0 + 0.5) << 0x08 \
+        | int(clampf(c.b, 0.0, 1.0) * 255.0 + 0.5)
 
 
 ## Renders the color as a 6 digit, 24 bit hexadecimal string suitable for web
 ## development. The channels are packed in the order red, green, blue. There is
 ## no hashtag or '0x' prefix for the string.
 static func to_hex_web(c: Rgb) -> String:
-    return "%06x" % (int(clamp(c.r, 0.0, 1.0) * 255.0 + 0.5) << 0x10 \
-        | int(clamp(c.g, 0.0, 1.0) * 255.0 + 0.5) << 0x08 \
-        | int(clamp(c.b, 0.0, 1.0) * 255.0 + 0.5))
+    return "%06x" % (int(clampf(c.r, 0.0, 1.0) * 255.0 + 0.5) << 0x10 \
+        | int(clampf(c.g, 0.0, 1.0) * 255.0 + 0.5) << 0x08 \
+        | int(clampf(c.b, 0.0, 1.0) * 255.0 + 0.5))
 
 
 ## Renders a color as a string in JSON format.

@@ -40,7 +40,12 @@ func _to_string() -> String:
 
 ## Adds the left and right operands, for the purpose of making adjustments.
 static func _add(o: Lab, d: Lab) -> Lab:
-    return Lab.new(o.l + d.l, o.a + d.a, o.b + d.b, o.alpha + d.alpha)
+
+    return Lab.new(
+        clampf(o.l + d.l, 0.0, 100.0),
+        o.a + d.a,
+        o.b + d.b,
+        clampf(o.alpha + d.alpha, 0.0, 1.0))
 
 
 ## Creates a color with the alpha channel of the right operand. The other
@@ -81,10 +86,10 @@ static func approx(o: Lab, \
     d: Lab, \
     eps: float = 0.000001, \
     alpha_scalar: float = 1.0) -> bool:
-    return abs(d.l - o.l) <= eps \
-        and abs(d.a - o.a) <= eps \
-        and abs(d.b - o.b) <= eps \
-        and abs((d.alpha - o.alpha) * alpha_scalar) <= eps
+    return absf(d.l - o.l) <= eps \
+        and absf(d.a - o.a) <= eps \
+        and absf(d.b - o.b) <= eps \
+        and absf((d.alpha - o.alpha) * alpha_scalar) <= eps
 
 
 ## Evaluates a Bezier curve in color space according to a factor [0.0, 1.0],
@@ -118,23 +123,23 @@ static func bezier_tangent(ap0: Lab, \
 ## Finds the color's a component expressed as a byte in [0, 255].
 ## Clamps to the range [-127.5, 127.5], floors to an int, then adds 128.
 static func byte_a(o: Lab) -> int:
-    return 128 + floori(clamp(o.a, -127.5, 127.5))
+    return 128 + floori(clampf(o.a, -127.5, 127.5))
 
 
 ## Finds the color's alpha expressed as a byte in [0, 255].
 static func byte_alpha(o: Lab) -> int:
-    return int(clamp(o.alpha, 0.0, 1.0) * 255.0 + 0.5)
+    return int(clampf(o.alpha, 0.0, 1.0) * 255.0 + 0.5)
 
 
 ## Finds the color's b component expressed as a byte in [0, 255].
 ## Clamps to the range [-127.5, 127.5], floors to an int, then adds 128.
 static func byte_b(o: Lab) -> int:
-    return 128 + floori(clamp(o.b, -127.5, 127.5))
+    return 128 + floori(clampf(o.b, -127.5, 127.5))
 
 
 ## Finds the color's lightness expressed as a byte in [0, 255].
 static func byte_light(o: Lab) -> int:
-    return int(clamp(o.l, 0.0, 100.0) * 2.55 + 0.5)
+    return int(clampf(o.l, 0.0, 100.0) * 2.55 + 0.5)
 
 
 ## Finds a color's chroma. Finds the Euclidean distance of a and b from the
@@ -226,15 +231,15 @@ static func grid_cartesian(cols: int = 8, \
     min_light: float = 0.0, \
     max_light: float = 100.0) -> Array:
 
-    var mxl_vrf: float = max(min_light, max_light)
-    var mnl_vrf: float = min(min_light, max_light)
+    var mxl_vrf: float = maxf(min_light, max_light)
+    var mnl_vrf: float = minf(min_light, max_light)
 
-    var ab_bds_vrf: float = abs(ab_bounds)
+    var ab_bds_vrf: float = absf(ab_bounds)
 
-    var t_vrf: float = clamp(opacity, 0.0, 1.0)
-    var l_vrf: int = max(1, layers)
-    var r_vrf: int = max(1, rows)
-    var c_vrf: int = max(1, cols)
+    var t_vrf: float = clampf(opacity, 0.0, 1.0)
+    var l_vrf: int = maxi(1, layers)
+    var r_vrf: int = maxi(1, rows)
+    var c_vrf: int = maxi(1, cols)
 
     var one_layer: bool = l_vrf == 1
     var one_row: bool = r_vrf == 1
@@ -497,27 +502,31 @@ static func scale_chroma(c: Lab, scalar: float) -> Lab:
 
 ## Finds the color's a component expressed as a short in [0, 65535].
 static func short_a(o: Lab) -> int:
-    return 32768 + floori(257.0 * clamp(o.a, -127.5, 127.5))
+    return 32768 + floori(257.0 * clampf(o.a, -127.5, 127.5))
 
 
 ## Finds the color's alpha channel expressed as a short in [0, 65535].
 static func short_alpha(o: Lab) -> int:
-    return int(clamp(o.alpha, 0.0, 1.0) * 65535.0 + 0.5)
+    return int(clampf(o.alpha, 0.0, 1.0) * 65535.0 + 0.5)
 
 
 ## Finds the color's b component expressed as a short in [0, 65535].
 static func short_b(o: Lab) -> int:
-    return 32768 + floori(257.0 * clamp(o.b, -127.5, 127.5))
+    return 32768 + floori(257.0 * clampf(o.b, -127.5, 127.5))
 
 
 ## Finds the color's lightness expressed as a short in [0, 65535].
 static func short_light(o: Lab) -> int:
-    return int(clamp(o.l, 0.0, 100.0) * 655.35 + 0.5)
+    return int(clampf(o.l, 0.0, 100.0) * 655.35 + 0.5)
 
 
 ## Finds the signed difference between two colors.
 static func _sub(o: Lab, d: Lab) -> Lab:
-    return Lab.new(o.l - d.l, o.a - d.a, o.b - d.b, o.alpha - d.alpha)
+    return Lab.new(
+        clampf(o.l - d.l, 0.0, 100.0),
+        o.a - d.a,
+        o.b - d.b,
+        clampf(o.alpha - d.alpha, 0.0, 1.0))
 
 
 ## Renders a color as a string in JSON format.
