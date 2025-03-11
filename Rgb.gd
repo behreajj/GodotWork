@@ -22,7 +22,6 @@ func _init(rd: float = 1.0, \
     gr: float = 1.0, \
     bl: float = 1.0, \
     opacity: float = 1.0):
-
     self.r = rd
     self.g = gr
     self.b = bl
@@ -81,21 +80,21 @@ static func eq(o: Rgb, d: Rgb) -> bool:
 
 
 ## Creates a color from an integer with packed channels in 0xAABBGGRR order.
-static func from_abgr_32(c: int) -> Rgb:
-    return Rgb.new(
-        (c & 0xff) / 255.0,
-        ((c >> 0x08) & 0xff) / 255.0,
-        ((c >> 0x10) & 0xff) / 255.0,
-        ((c >> 0x18) & 0xff) / 255.0)
+static func from_abgr_32(x: int) -> Rgb:
+    return Rgb.from_bytes(
+        x >> 0x00,
+        x >> 0x08,
+        x >> 0x10,
+        x >> 0x18)
 
 
 ## Creates a color from an integer with packed channels in 0xAARRGGBB order.
-static func from_argb_32(c: int) -> Rgb:
-    return Rgb.new(
-        ((c >> 0x10) & 0xff) / 255.0,
-        ((c >> 0x08) & 0xff) / 255.0,
-        (c & 0xff) / 255.0,
-        ((c >> 0x18) & 0xff) / 255.0)
+static func from_argb_32(x: int) -> Rgb:
+    return Rgb.from_bytes(
+        x >> 0x10,
+        x >> 0x08,
+        x >> 0x00,
+        x >> 0x18)
 
 
 ## Creates a color from integers in the range [0, 255].
@@ -103,8 +102,11 @@ static func from_bytes(r8: int = 255, \
     g8: int = 255, \
     b8: int = 255, \
     a8: int = 255) -> Rgb:
-    # TODO: Make behaviour consistent with Lab, Lch functions.
-    return Rgb.new(r8 / 255.0, g8 / 255.0, b8 / 255.0, a8 / 255.0)
+    return Rgb.new(
+        (r8 & 0xff) / 255.0,
+        (g8 & 0xff) / 255.0,
+        (b8 & 0xff) / 255.0,
+        (a8 & 0xff) / 255.0)
 
 
 ## Creates a color from integers in the range [0, 65535].
@@ -112,8 +114,11 @@ static func from_shorts(r16: int = 65535, \
     g16: int = 65535, \
     b16: int = 65535, \
     a16: int = 65535) -> Rgb:
-    # TODO: Make behaviour consistent with Lab, Lch functions.
-    return Rgb.new(r16 / 65535.0, g16 / 65535.0, b16 / 65535.0, a16 / 65535.0)
+    return Rgb.new(
+        (r16 & 0xffff) / 65535.0,
+        (g16 & 0xffff) / 65535.0,
+        (b16 & 0xffff) / 65535.0,
+        (a16 & 0xffff) / 65535.0)
 
 
 ## Converts a color from gamma sRGB to linear sRGB.
@@ -149,7 +154,7 @@ static func gray_gamma(c: Rgb) -> Rgb:
         + 0.71516913 * linear.g \
         + 0.07218152 * linear.b
     var v: float = rel_lum
-    if v <=  0.04045:
+    if v <= 0.04045:
         v = v / 12.92
     else:
         v = pow((v + 0.055) / 1.055, 2.4)
@@ -172,7 +177,6 @@ static func grid_cartesian(cols: int = 8, \
     rows: int = 8, \
     layers: int = 8, \
     opacity: float = 1.0) -> Array:
-
     var t_vrf: float = clampf(opacity, 0.0, 1.0)
     var l_vrf: int = maxi(1, layers)
     var r_vrf: int = maxi(1, rows)
@@ -351,30 +355,30 @@ static func tone_map_aces_linear(c: Rgb) -> Rgb:
 ## Finds the color expressed as a 32 bit integer. Clamps the color's channels
 ## to [0, 255], i.e. uses saturation arithmetic. The channels are packed in
 ## the order alpha, blue, green, red.
-static func to_abgr_32(c: Rgb) -> int:
-    return int(clampf(c.alpha, 0.0, 1.0) * 255.0 + 0.5) << 0x18 \
-        | int(clampf(c.b, 0.0, 1.0) * 255.0 + 0.5) << 0x10 \
-        | int(clampf(c.g, 0.0, 1.0) * 255.0 + 0.5) << 0x08 \
-        | int(clampf(c.r, 0.0, 1.0) * 255.0 + 0.5)
+static func to_abgr_32(o: Rgb) -> int:
+    return Rgb.byte_alpha(o) << 0x18 \
+        | Rgb.byte_blue(o) << 0x10 \
+        | Rgb.byte_green(o) << 0x08 \
+        | Rgb.byte_red(o)
 
 
 ## Finds the color expressed as a 32 bit integer. Clamps the color's channels
 ## to [0, 255], i.e. uses saturation arithmetic. The channels are packed in
 ## the order alpha, red, green, blue.
-static func to_argb_32(c: Rgb) -> int:
-    return int(clampf(c.alpha, 0.0, 1.0) * 255.0 + 0.5) << 0x18 \
-        | int(clampf(c.r, 0.0, 1.0) * 255.0 + 0.5) << 0x10 \
-        | int(clampf(c.g, 0.0, 1.0) * 255.0 + 0.5) << 0x08 \
-        | int(clampf(c.b, 0.0, 1.0) * 255.0 + 0.5)
+static func to_argb_32(o: Rgb) -> int:
+    return Rgb.byte_alpha(o) << 0x18 \
+        | Rgb.byte_red(o) << 0x10 \
+        | Rgb.byte_green(o) << 0x08 \
+        | Rgb.byte_blue(o)
 
 
 ## Renders the color as a 6 digit, 24 bit hexadecimal string suitable for web
 ## development. The channels are packed in the order red, green, blue. There is
 ## no hashtag or '0x' prefix for the string.
-static func to_hex_web(c: Rgb) -> String:
-    return "%06x" % (int(clampf(c.r, 0.0, 1.0) * 255.0 + 0.5) << 0x10 \
-        | int(clampf(c.g, 0.0, 1.0) * 255.0 + 0.5) << 0x08 \
-        | int(clampf(c.b, 0.0, 1.0) * 255.0 + 0.5))
+static func to_hex_web(o: Rgb) -> String:
+    return "%06x" % (Rgb.byte_red(o) << 0x10 \
+        | Rgb.byte_green(o) << 0x08 \
+        | Rgb.byte_blue(o))
 
 
 ## Renders a color as a string in JSON format.

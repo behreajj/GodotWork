@@ -207,7 +207,7 @@ static func _from_tlab_32(x: int) -> Lab:
 
 ## Creates a color from a 32 bit integer.
 static func _from_tlab_64(x: int) -> Lab:
-    return Lab.from_bytes(
+    return Lab.from_shorts(
         x >> 0x20,
         x >> 0x10,
         x >> 0x00,
